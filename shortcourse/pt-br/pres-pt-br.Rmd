@@ -1,0 +1,134 @@
+---
+title: "Análise de dados musicais no `R`"
+subtitle: "IV Seminário Internacional de Estatística com `R`"
+author: Bruna Wundervald & Julio Trecenti
+date: Maio, 2019
+output:
+  xaringan::moon_reader:
+    css: ["default", "css/my-theme.css", "css/my-fonts.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "https://platform.twitter.com/widgets.js"
+    includes:
+      in_header: header.html  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = 'center',
+                      warning = FALSE, message = FALSE)
+```
+
+# Quem somos
+
+.pull-left[
+```{r, echo = FALSE, out.width="70%"}
+knitr::include_graphics("img/bruna.jpg")
+```
+] .pull-right[
+**Bruna Wundervald**
+- Doutoranda em Estatística na Maynooth University.
+- Twitter: @bwundervald
+- GitHub: @brunaw
+]
+
+---
+# Quem somos
+
+.pull-left[
+```{r, echo = FALSE, out.width="70%"}
+knitr::include_graphics("img/jubs.png")
+```
+].pull-right[
+  **Julio Trecenti**
+  - Doutoranda em Estatística no IME - USP
+  - 2
+  - 3
+
+  ]
+
+---
+# Objetivos
+
+  - Aprender a utilizar os pacotes:
+    - `vagalumeR`: extração de letras
+    - `chorrrds`: extração de acordes 
+    - `Rspotify`: extração de variáveis da [API do Spotify](https://developer.spotify.com/documentation/web-api/)
+    
+  - Entender como funciona a acesso à APIs em geral.
+  - Conectar dados de diferentes fontes.
+  - Compreensão e resumo de dados em diferentes formatos:
+    - Texto
+    - Contínuos
+    - Sequências
+  - Aprender a criar e interpretar um modelo de predição simples. 
+
+**Não abordado neste curso:** análise de aúdio. 
+
+---
+# Requisitos & recursos
+
+   - `R` iniciante/intermediário 
+   - `tidyverse`
+    - `%>%` (pipe) é essencial! 
+    
+    
+[**R-Music Blog**](https://r-music.rbind.io/) <img src="https://raw.githubusercontent.com/r-music/site/master/img/logo.png" style="float:left;margin-right:20px;" width=120>
+
+<h4 style="padding:0px;margin:10px;">
+R para extração & análise de dados musicais
+</h4>
+
+
+---
+# Conectando às APIs
+## `vagalumeR`
+Passos:
+  1. Entrar em `https://auth.vagalume.com.br/ ` e logar,
+  2. Entrar em `https://auth.vagalume.com.br/settings/api/` e criar um 
+  aplicativo,
+  3. Entrar em `https://auth.vagalume.com.br/settings/api/` novamente 
+  e copiar a credencial do aplicativo. 
+  4. Salvar a credencial em um objeto, como:
+  
+```{r, eval = FALSE}
+key_vagalume <- "minha-credencial"
+```
+
+  
+
+
+---
+# Conectando às APIs
+## `Rspotify`
+
+Passos:
+  1. Entrar em `https://developer.spotify.com/` e logar, 
+  2. Entrar em `https://developer.spotify.com/dashboard/` e criar um 
+  aplicativo,
+  3. Salvar o **client ID** e o **client Secret** gerados, 
+  4. Definir a como URL de redirecionamento como `http://localhost:1410/`,
+  5. Usar a função `spotifyOAuth` para autenticar o acesso:
+  
+```{r, eval = FALSE}
+library(Rspotify)
+key_spotify <- spotifyOAuth("app_id","client_id","client_secret")
+```
+  
+> As chaves serão usadas posteriormente para nos dar acesso aos
+dados provenientes das duas APIs.
+
+
+
+---
+
+class: bottom, center, inverse
+
+<font size="30">Obrigada! </font>
+
+
+```{r, echo = FALSE, out.width="50%"}
+knitr::include_graphics("img/rladies.png")
+```

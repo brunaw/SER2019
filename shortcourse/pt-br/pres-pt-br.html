@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Análise de dados musicais no R</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Bruna Wundervald &amp; Julio Trecenti" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/5235085b15.js"></script>
+    <link rel="stylesheet" href="css/my-theme.css" type="text/css" />
+    <link rel="stylesheet" href="css/my-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Análise de dados musicais no <code>R</code>
+## IV Seminário Internacional de Estatística com <code>R</code>
+### Bruna Wundervald &amp; Julio Trecenti
+### Maio, 2019
+
+---
+
+
+
+
+# Quem somos
+
+.pull-left[
+&lt;img src="img/bruna.jpg" width="70%" style="display: block; margin: auto;" /&gt;
+] .pull-right[
+**Bruna Wundervald**
+- Doutoranda em Estatística na Maynooth University.
+- Twitter: @bwundervald
+- GitHub: @brunaw
+]
+
+---
+# Quem somos
+
+.pull-left[
+&lt;img src="img/jubs.png" width="70%" style="display: block; margin: auto;" /&gt;
+].pull-right[
+  **Julio Trecenti**
+  - Doutoranda em Estatística no IME - USP
+  - 2
+  - 3
+
+  ]
+
+---
+# Objetivos
+
+  - Aprender a utilizar os pacotes:
+    - `vagalumeR`: extração de letras
+    - `chorrrds`: extração de acordes 
+    - `Rspotify`: extração de variáveis da [API do Spotify](https://developer.spotify.com/documentation/web-api/)
+    
+  - Entender como funciona a acesso à APIs em geral.
+  - Conectar dados de diferentes fontes.
+  - Compreensão e resumo de dados em diferentes formatos:
+    - Texto
+    - Contínuos
+    - Sequências
+  - Aprender a criar e interpretar um modelo de predição simples. 
+
+**Não abordado neste curso:** análise de aúdio. 
+
+---
+# Requisitos &amp; recursos
+
+   - `R` iniciante/intermediário 
+   - `tidyverse`
+    - `%&gt;%` (pipe) é essencial! 
+    
+    
+[**R-Music Blog**](https://r-music.rbind.io/) &lt;img src="https://raw.githubusercontent.com/r-music/site/master/img/logo.png" style="float:left;margin-right:20px;" width=120&gt;
+
+&lt;h4 style="padding:0px;margin:10px;"&gt;
+R para extração &amp; análise de dados musicais
+&lt;/h4&gt;
+
+
+---
+# Conectando às APIs
+## `vagalumeR`
+Passos:
+  1. Entrar em `https://auth.vagalume.com.br/ ` e logar,
+  2. Entrar em `https://auth.vagalume.com.br/settings/api/` e criar um 
+  aplicativo,
+  3. Entrar em `https://auth.vagalume.com.br/settings/api/` novamente 
+  e copiar a credencial do aplicativo. 
+  4. Salvar a credencial em um objeto, como:
+  
+
+```r
+key_vagalume &lt;- "minha-credencial"
+```
+
+  
+
+
+---
+# Conectando às APIs
+## `RSpotify`
+
+Passos:
+  1. Entrar em `https://developer.spotify.com/` e logar, 
+  2. Entrar em `https://developer.spotify.com/dashboard/` e criar um 
+  aplicativo,
+  3. Salvar o **client ID** e o **client Secret** gerados, 
+  4. Usar a função `` para autenticar o acesso:
+  
+
+```r
+library(Rspotify)
+key_spotify &lt;- spotifyOAuth("app_id","client_id","client_secret")
+```
+  
+  
+
+
+
+---
+
+class: bottom, center, inverse
+
+&lt;font size="30"&gt;Obrigada! &lt;/font&gt;
+
+
+&lt;img src="img/rladies.png" width="50%" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="https://platform.twitter.com/widgets.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script>
+(function() {
+  var i, text, code, codes = document.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+})();
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
