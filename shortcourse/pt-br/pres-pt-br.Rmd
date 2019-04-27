@@ -151,7 +151,6 @@ class: bottom, center, inverse
 queremos as informações (como artistas, álbuns, músicas) e passar
 estes IDs para funções específicas;
 
-
 ---
 
 ## `vagalumeR`
@@ -265,7 +264,7 @@ chords <- songs %>%
 
 ---
 
-# Combinando as diferentes bases
+# Combinando as bases
 
 ```{r, eval = FALSE}
 # Padronizar o nome da coluna chave e usar uma função de união, 
@@ -296,13 +295,35 @@ nrow(chords) - nrow(all_data)
 #> 8973
 ```
 
+--
+
+- Resolver esses casos manualmente pode dar muito trabalho.
+- Uma forma de resolver automaticamente é calculando as similaridades entre os nomes.
+- Uma forma de medir a distância entre os nomes é verificando se um nome é igual ao outro a menos de uma, duas ou três letras. Por exemplo:
+
+```{r}
+nome1 <- "Geni e o Zepelim"
+nome2 <- "Geni e o Zepelin"
+# Calcula a distância
+RecordLinkage::levenshteinDist(nome1, nome2)
+# Calcula a similaridade = 1 -  dist / str_length(maior_nome)
+RecordLinkage::levenshteinSim(nome1, nome2)
+```
+
+- Quando os nomes são diferentes, pegamos o nome que tem maior similaridade.
+- Às vezes não existe um match, então é bom escolher um valor de corte (arbitrário) para a similaridade.
+
+---
+
+# Arrumando os nomes
+
 ```{r, eval = FALSE}
 # Vamos arrumar algumas linhas avaliando as distâncias
 # entre os nomes das músicas
-library(RecordLinkage)
 
-# 1. O que tem de unmatch entre as bases de letras e acordes 
-anti_chords_lyrics <- chords %>% dplyr::anti_join(lyrics, by = "song") 
+# 1. O que tem em acordes que nao tem em letras?
+anti_chords_lyrics <- chords %>% 
+  dplyr::anti_join(lyrics, by = "song") 
 
 # 2. Salvando os nomes para corrigir
 names_to_fix <- anti_chords_lyrics %>% 
@@ -313,7 +334,7 @@ names_to_fix <- anti_chords_lyrics %>%
 # da base de letras e as que deram
 # unmatch na base de acordes
 dists <- lyrics$song %>% 
-  purrr::map(levenshteinSim, str1 = names_to_fix)
+  purrr::map(RecordLinkage::levenshteinSim, str1 = names_to_fix)
 
 ```
 
@@ -345,9 +366,13 @@ results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
 
 ... 
 
+--
+
+Agora sobraram menos problemas; vamos arrumá-los manualmente.
+
 ---
 
-## Arrumando dados similares
+## Arrumando manualmente
 
 ```{r, eval = FALSE}
 chords <- chords %>% 
@@ -369,6 +394,7 @@ chords <- chords %>%
 --
 
 Dica: Como criar a sintaxe anterior facilmente: 
+
 ```{r, eval = FALSE}
 cat(
   paste0("song == ", "'", results_dist_lyrics$from_chords, "' ~ '", 
@@ -385,7 +411,7 @@ all_data <- chords %>%
   dplyr::inner_join(lyrics, by = "song") %>% 
   dplyr::inner_join(features, by = "song")
 
-# Salvando os dados!
+# Finalmente salvando os dados!
 write.table(all_data, "all_data.txt")
 ```
 
@@ -435,8 +461,22 @@ unnested %>%
   dplyr::count(word) %>% 
   arrange(desc(n)) %>% 
   slice(1:10)
-
 ```
+
+---
+
+# n-grams
+
+Pega as palavras e seus passados.
+
+```{r}
+nome1 <- "Geni e o Zepelim"
+tokenizers::tokenize_ngrams(nome1, n = 1)
+tokenizers::tokenize_ngrams(nome1, n = 2)
+tokenizers::tokenize_ngrams(nome1, n = 3)
+```
+
+- útil para guardar expressões mais complexas.
 
 ---
 
@@ -511,7 +551,7 @@ all_data %>%
                  colour = 'darksalmon') + 
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
-  labs(x = 'Top 30 most common 2-grams', y = 'Counts') +
+  labs(x = 'Top 30 2-grams mais comuns', y = 'Counts') +
   theme_bw()
 ```
 
@@ -1108,7 +1148,6 @@ mean(m0$err.rate[,1])
 corrplot::corrplot(cor(train %>% select_if(is.numeric), 
                        method = "spearman"))
 ```
-
 
 ---
 
