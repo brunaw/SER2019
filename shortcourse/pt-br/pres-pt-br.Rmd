@@ -50,7 +50,7 @@ knitr::include_graphics("img/jubs.png")
   - Doutorando em Estatística no IME-USP
   - Sócio da Curso-R
   - Twitter: @jtrecenti
-  - GitHub: @jtrecenti3
+  - GitHub: @jtrecenti
 
   ]
 
@@ -70,7 +70,7 @@ knitr::include_graphics("img/jubs.png")
     - Sequências
   - Aprender a criar e interpretar um modelo de predição simples. 
 
-**Não abordado neste curso:** análise de aúdio. 
+**Não abordado neste curso:** análise de áudio. 
 
 ---
 # Requisitos & recursos
@@ -145,11 +145,11 @@ class: bottom, center, inverse
 
 # Introdução
 
-- Para todos os pacotes, existe um fluxo a ser seguido.
+- Para cada pacote, existe um fluxo a ser seguido.
 
-- O fluxo involve, basicamente, obter os IDs dos obejtos dos quais
-queremos as informações (como artistas, albúns, músicas) e passar
-estes IDs para funcões específicas;
+- O fluxo envolve, basicamente, obter os IDs dos objetos dos quais
+queremos as informações (como artistas, álbuns, músicas) e passar
+estes IDs para funções específicas;
 
 
 ---
@@ -348,7 +348,7 @@ results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
 
 *logo eu* e *logo eu?*, 
 
-*nao fala de maria* e *não fala de maria*,
+*não fala de maria* e *não fala de maria*,
 
 ... 
 
