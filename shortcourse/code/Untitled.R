@@ -280,6 +280,8 @@ write.table(all_data, "all_data.txt")
 library(tidytext)
 library(wordcloud)
 
+all_data <- read.table("all_data.txt", stringsAsFactors = FALSE)
+
 # Taking the portuguse stopwords from the `tm` package
 stopwords_pt <- data.frame(word = tm::stopwords("portuguese"))
 
@@ -412,10 +414,13 @@ chords %>%
   dplyr::summarise(cont = n()) %>% 
   dplyr::mutate(song = fct_reorder(song, cont)) %>% 
   top_n(n = 20) %>% 
-  ggplot(aes(x = cont, y = song)) +
-  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
-  labs(y = 'Songs', x = 'Counts') +
+  ggplot(aes(y = cont, x = song)) +
+  geom_bar(colour = 'dodgerblue4', fill = 'darksalmon',
+           size = 0.5, alpha = 0.6, stat = "identity") +
+  labs(x = 'Songs', y = 'Counts') +
+  coord_flip() +
   theme_bw()
+
 
 # Feature extraction from the chords
 feat_chords <- all_data %>%
@@ -524,8 +529,6 @@ spot <- spot %>%
 
 spot %>% 
   janitor::tabyl(pop_class)
-
-names(model_data)
 
 # Preparing data for modelling
 model_data <- feat_chords %>% 

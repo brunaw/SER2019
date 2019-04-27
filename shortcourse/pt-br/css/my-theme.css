@@ -19,6 +19,8 @@ font-weight: bold;
 font-size: larger;
 }
 
+
+
 .onfire { color: #4A274F; }
 
 /* link color */
@@ -38,7 +40,7 @@ a:visited {
 
 /* mouse over link */
 a:hover {
-    color: #ee5863;
+    color: #F0A07C;
 }
 
 /* selected link */
@@ -59,18 +61,18 @@ a:active {
 }
 
 .inverse {
-  background-color: #FFFFFF;
-  color: #4A274F;
+  background-color: #2F3C7E;
+  color: #F0A07C;
   /*text-shadow: 0 0 20px #333;*/
 }
 
 .inverse h1, .inverse h2, .inverse h3 {
-  color: #2F3C7E;
+  color: #F0A07C;
   line-height: 1.0em;
 }
 
 .inverse .remark-code {
-  color: #3498CC;
+  color: #F0A07C;
 }
 
 /* Two-column layout */

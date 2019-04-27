@@ -5,6 +5,12 @@
     <meta charset="utf-8">
     <meta name="author" content="Bruna Wundervald &amp; Julio Trecenti" />
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <script src="libs/htmlwidgets-1.3/htmlwidgets.js"></script>
+    <script src="libs/d3-3.5.15/d3.min.js"></script>
+    <script src="libs/d3-tip-0.6.7/index.js"></script>
+    <link href="libs/chorddiag-0.0.0.9000/chorddiag.css" rel="stylesheet" />
+    <script src="libs/chorddiag-0.0.0.9000/chorddiag.js"></script>
+    <script src="libs/chorddiag-binding-0.1.2/chorddiag.js"></script>
     <script src="https://use.fontawesome.com/5235085b15.js"></script>
     <link rel="stylesheet" href="css/my-theme.css" type="text/css" />
     <link rel="stylesheet" href="css/my-fonts.css" type="text/css" />
@@ -41,7 +47,7 @@ class: center, middle, inverse, title-slide
 &lt;img src="img/jubs.png" width="70%" style="display: block; margin: auto;" /&gt;
 ].pull-right[
   **Julio Trecenti**
-  - Doutoranda em Estatística no IME - USP
+  - Doutorando em Estatística no IME - USP
   - 2
   - 3
 
@@ -55,7 +61,7 @@ class: center, middle, inverse, title-slide
     - `chorrrds`: extração de acordes 
     - `Rspotify`: extração de variáveis da [API do Spotify](https://developer.spotify.com/documentation/web-api/)
     
-  - Entender como funciona a acesso à APIs em geral.
+  - Entender como funciona a acesso a APIs em geral.
   - Conectar dados de diferentes fontes.
   - Compreensão e resumo de dados em diferentes formatos:
     - Texto
@@ -79,6 +85,18 @@ class: center, middle, inverse, title-slide
 R para extração &amp; análise de dados musicais
 &lt;/h4&gt;
 
+---
+
+# Carregando pacotes
+
+Principais: 
+
+```r
+library(vagalumeR)
+library(Rspotify)
+library(chorrrds)
+library(tidyverse)
+```
 
 ---
 # Conectando às APIs
@@ -96,19 +114,17 @@ Passos:
 key_vagalume &lt;- "minha-credencial"
 ```
 
-  
-
-
 ---
 # Conectando às APIs
-## `RSpotify`
+## `Rspotify`
 
 Passos:
   1. Entrar em `https://developer.spotify.com/` e logar, 
   2. Entrar em `https://developer.spotify.com/dashboard/` e criar um 
   aplicativo,
   3. Salvar o **client ID** e o **client Secret** gerados, 
-  4. Usar a função `` para autenticar o acesso:
+  4. Definir a como URL de redirecionamento como `http://localhost:1410/`,
+  5. Usar a função `spotifyOAuth` para autenticar o acesso:
   
 
 ```r
@@ -116,18 +132,898 @@ library(Rspotify)
 key_spotify &lt;- spotifyOAuth("app_id","client_id","client_secret")
 ```
   
+&gt; As chaves serão usadas posteriormente para nos dar acesso aos
+dados provenientes das duas APIs.
+
+---
+
+class: bottom, center, inverse
+
+# Extração de dados
+## `vagalumeR`: letras de músicas 
+## `RSpotify`: variáveis do Spotify
+## `chorrrds`: acordes das músicas
+
+---
+
+# Introdução
+
+- Para todos os pacotes, existe um fluxo a ser seguido.
+
+- O fluxo involve, basicamente, obter os IDs dos obejtos dos quais
+queremos as informações (como artistas, albúns, músicas) e passar
+estes IDs para funcões específicas;
+
+
+---
+
+# `vagalumeR`
+
+
+
+```r
+# 1. Definir artista
+artist &lt;- "chico-buarque"
+
+# 2. Buscar os nomes e IDS das músicas de um artista
+songs &lt;- artist %&gt;% 
+  purrr::map_dfr(songNames)
+
+# 3. Mapear a função que traz as letras nos IDs encontrados  
+lyrics &lt;-  songs %&gt;% 
+  dplyr::pull(song.id) %&gt;% 
+  purrr::map(lyrics, 
+             artist = artist,
+             type = "id", 
+             key = key_vagalume) %&gt;%
+  purrr::map_df(data.frame) %&gt;% 
+  dplyr::select(-song) %&gt;% 
+  dplyr::right_join(songs %&gt;% 
+                      dplyr::select(song, song.id), by = "song.id")
+```
+
+---
+
+# `RSpotify`
+
+
+```r
+# 1. "Buscar" o artist usando a API
+find_artist &lt;- searchArtist("chico buarque", token = key_spotify)
+
+# 2. Usar o ID encontrado para buscar informações dos albuns
+albums &lt;- getAlbums(find_artist$id[1], token = key_spotify)
+
+# 3. Obter as músicas de cada albúm
+albums_res &lt;- albums %&gt;% 
+  dplyr::pull(id) %&gt;% 
+  purrr::map_df(
+    ~{
+      getAlbum(.x, token = key_spotify) %&gt;% 
+        dplyr::select(id, name) 
+    }) %&gt;% 
+  tidyr::unnest()
+
+ids &lt;- albums_res %&gt;% 
+  dplyr::pull(id)
+
+# 4. Obter as variáveis para cada música
+features &lt;- ids %&gt;% 
+  purrr::map_df(
+    ~{
+      getFeatures(.x, token = key_spotify) 
+    }) %&gt;% 
+  dplyr::left_join(albums_res, by = "id")
+```
+
+---
+
+**O pacote ainda não tem uma opção simples para encontrar a popularidade das músicas. Como resolver?**
+
+```r
+# 5. Criar uma função simples para pegar a popularidade
+getPop &lt;- function(id, token){
+  req &lt;- httr::GET(paste0("https://api.spotify.com/v1/tracks/", id), 
+                   httr::config(token = token))
+  json1 &lt;- httr::content(req)
+  res &lt;- data.frame(song = json1$name, 
+                    popul = json1$popularity, 
+                    id = json1$id)
+  return(res)
+}
+
+# 6. Mapear essa função nos IDs das músicas
+popul &lt;-  features %&gt;% 
+  dplyr::pull(id) %&gt;% 
+  purrr::map_df(
+    ~{
+      getPop(.x, token = key_spotify) 
+    }) 
+
+# 7. Juntar a popularidade com o resto das variáveis 
+features &lt;- features %&gt;% 
+  dplyr::right_join(
+    popul %&gt;% dplyr::select(-song), 
+    by = c("id" = "id"))
+```
+
+---
+# Detalhes sobre APIs
+
+- ** Elas podem ser muito instáveis. Isso significa que algumas vezes, mesmo sem atingir o limite de consultas máximo, elas vão falhar.**
+
+Como resolver? 
+
+  - Dividir o processo em consultas menores
+  - Colocar um pequeno intervalo de tempo entre as consultas, com
+  `Sys.sleep()` por exemplo 
+  
+---
+
+# `chorrrds`
+
+
+```r
+# 1. Buscar as músicas
+songs &lt;- "chico-buarque" %&gt;% 
+  chorrrds::get_songs() 
+
+# 2. Mapear a extração de acordes nas músicas encontradas
+chords &lt;- songs %&gt;% 
+  dplyr::pull(url) %&gt;%                     
+  purrr::map(chorrrds::get_chords) %&gt;%    
+  purrr::map_dfr(dplyr::mutate_if, is.factor, as.character)   %&gt;% 
+  chorrrds::clean(message = FALSE) 
+```
+
+
+---
+
+# Combinando as diferentes bases
+
+
+```r
+# Padronizar o nome da coluna chave e usar uma função de união, 
+# como o inner_join()
+
+chords &lt;- chords %&gt;% 
+  dplyr::mutate(song = stringr::str_remove(music, "chico buarque ")) %&gt;% 
+  dplyr::select(-music)
+
+lyrics &lt;- lyrics %&gt;% 
+  dplyr::mutate(song = stringr::str_to_lower(song))
+
+features &lt;- features %&gt;% 
+  dplyr::mutate(song = stringr::str_to_lower(name)) %&gt;% 
+  dplyr::select(-name)
+
+all_data &lt;- chords %&gt;% 
+  dplyr::inner_join(lyrics, by = "song") %&gt;% 
+  dplyr::inner_join(features, by = "song")
+```
+
+---
+**E se tiver muita coisa que não deu match?**
+
+
+```r
+nrow(chords) - nrow(all_data) 
+&gt;  8973
+```
+
+
+```r
+# Vamos arrumar algumas linhas avaliando as distâncias
+# entre os nomes das músicas
+library(RecordLinkage)
+
+# O que tem de unmatch entre as bases de letras e acordes 
+anti_chords_lyrics &lt;- chords %&gt;% dplyr::anti_join(lyrics, by = "song") 
+
+# Salvando os nomes para corrigir
+names_to_fix &lt;- anti_chords_lyrics %&gt;% 
+  dplyr::distinct(song) %&gt;% 
+  dplyr::pull(song)
+
+# Calculando as 'distâncias' entre as músicas da base de letras e as que deram
+# unmatch na base de acordes
+dists &lt;- lyrics$song %&gt;% 
+  purrr::map(levenshteinSim, str1 = names_to_fix)
+
+# Encontrando os nomes de músicas mais similares nas duas bases
+ordered_dists &lt;- dists %&gt;% purrr::map_dbl(max)
+max_dists &lt;- dists %&gt;% purrr::map_dbl(which.max)
+
+# Filtrando as que tem similaridade &gt; 0.70
+indexes_min_dist &lt;- which(ordered_dists &gt; 0.70)
+songs_min_dist &lt;- lyrics$song[indexes_min_dist]
+index_lyrics &lt;- max_dists[which(ordered_dists &gt; 0.70)]
+```
+
+---
+
+
+
+```r
+# Salvando as mais similares em um data.frame 
+results_dist_lyrics &lt;- data.frame(from_chords = names_to_fix[index_lyrics],
+                                  from_lyrics = songs_min_dist)
+```
+
+**Exemplos de casos muito similares encontrados:**
+
+*a bela a fera*  e *a bela e a fera*, 
+
+*logo eu* e *logo eu?*, 
+
+*nao fala de maria* e *não fala de maria*,
+
+... 
+
+---
+
+# Alterando os dados muito similares
+
+
+```r
+chords &lt;- chords %&gt;% 
+  dplyr::mutate(
+    song = 
+      dplyr::case_when( 
+        song == 'a bela a fera' ~ 'a bela e a fera',  
+        song == 'a historia de lily braun' ~ 'a história de lily braun',  
+        song == 'a moca do sonho' ~ 'a moça do sonho',  
+        song == 'a ostra o vento' ~ 'a ostra e o vento',  
+        song == 'a televisao' ~ 'a televisão',  
+        song == 'a valsa dos clows' ~ 'a valsa dos clowns',  
+        song == 'a voz do dono o dono da voz' ~ 'a voz do dono e o dono da voz',  
+        song == 'agora falando serio' ~ 'agora falando sério',  
+        TRUE ~ song))
+```
+
+Como criar a sintaxe anterior facilmente: 
+
+```r
+cat(
+  paste0("song == ", "'", results_dist_lyrics$from_chords, "' ~ '", 
+         results_dist_lyrics$from_lyrics, "', "), collapse = "")
+```
+
+---
+
+# Refazendo os `joins`
+
+
+```r
+all_data &lt;- chords %&gt;% 
+  dplyr::inner_join(lyrics, by = "song") %&gt;% 
+  dplyr::inner_join(features, by = "song")
+
+# Salvando os dados!
+write.table(all_data, "all_data.txt")
+```
+
+---
+
+class: bottom, center, inverse
+
+# Análise Exploratória
+
+---
+
+# Parte 1: letras
+
+Pacotes extra:
+  - `tm`
+  - `tidytext`
+  - `lexiconPT`
   
 
+
+
+
+
+```r
+library(tidytext)
+library(wordcloud)
+
+# Lista de stopwords em português
+stopwords_pt &lt;- data.frame(word = tm::stopwords("portuguese"))
+
+# Quebrando as frase em palavras 
+unnested &lt;- all_data %&gt;% 
+  select(text) %&gt;% 
+  unnest_tokens(word, text) %&gt;% 
+  # Removendo stopwords
+  dplyr::anti_join(stopwords_pt, by = c("word" = "word"))
+```
+
+---
+
+# Parte 1: letras
+
+Contando cada palavra que apareceu nas letras: 
+
+```r
+unnested %&gt;% 
+  dplyr::count(word) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  slice(1:10)
+```
+
+```
+## # A tibble: 10 x 2
+##    word          n
+##    &lt;chr&gt;     &lt;int&gt;
+##  1 é         40064
+##  2 pra       24276
+##  3 iá        23832
+##  4 amor      18460
+##  5 diz       16505
+##  6 chocalho  15888
+##  7 vai       14603
+##  8 morena    11148
+##  9 esperando 10987
+## 10 dia       10642
+```
+
+---
+
+# 1-grams 
+
+
+```r
+unnested %&gt;% 
+  dplyr::count(word) %&gt;% 
+  dplyr::filter(n &lt; quantile(n, 0.999)) %&gt;% 
+  dplyr::top_n(n = 30) %&gt;% 
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  coord_flip() +
+  labs(x = 'Top 30 palavras mais comuns', y = 'Contagem') +
+  theme_bw()
+```
+
+
+---
+# 1-grams 
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-21-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+# Em formato de `wordcloud`
+
+
+```r
+unnested %&gt;% 
+  count(word) %&gt;% 
+  with(wordcloud(word, n, family = "serif", 
+                 random.order = FALSE, max.words = 30, 
+                 colors = c("darksalmon", "dodgerblue4")))
+```
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-22-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# 2-grams 
+
+
+```r
+all_data %&gt;% 
+  select(text) %&gt;% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %&gt;%
+  separate(bigram, c("word1", "word2"), sep = " ") %&gt;%
+  filter(!word1 %in% stopwords_pt$word, 
+         !is.na(word1), !is.na(word2),
+         !word2 %in% stopwords_pt$word) %&gt;%
+  count(word1, word2, sort = TRUE) %&gt;% 
+  mutate(word = paste(word1, word2)) %&gt;% 
+  filter(n &lt; quantile(n, 0.999)) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  slice(1:30) %&gt;%  
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  coord_flip() +
+  labs(x = 'Top 30 most common 2-grams', y = 'Counts') +
+  theme_bw()
+```
+
+
+---
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-24-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Análise de sentimentos
+
+
+```r
+# devtools::install_github("sillasgonzaga/lexiconPT")
+
+# Buscando os sentimentos do pacote lexiconPT
+sentiments_pt &lt;- lexiconPT::oplexicon_v2.1 %&gt;% 
+  mutate(word = term) %&gt;% 
+  select(word, polarity)  
+
+# Juntando os sentimentos com as palavras presentes nas músicas
+add_sentiments &lt;- all_data %&gt;% 
+  select(text, song) %&gt;% 
+  group_by_all() %&gt;% 
+  slice(1) %&gt;% 
+  ungroup() %&gt;% 
+  unnest_tokens(word, text) %&gt;% 
+  dplyr::anti_join(stopwords_pt, by = c("word" = "word")) %&gt;% 
+  dplyr::inner_join(sentiments_pt, by = c("word" = "word")) 
+```
+
+---
+
+
+```r
+add_sentiments %&gt;% 
+  group_by(polarity) %&gt;% 
+  count(word) %&gt;% 
+  filter(n &lt; quantile(n, 0.999)) %&gt;% 
+  top_n(n = 15) %&gt;% 
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  facet_wrap(~polarity, scales = "free") +
+  coord_flip() +
+    labs(x = 'Top 15 palavras mais comuns', 
+       y = 'Contagens', title = "Sentimentos") +
+  theme_bw()
+```
+
+
+---
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-27-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Quais são as músicas mais negativas e mais positivas?
+
+
+```r
+summ &lt;- add_sentiments %&gt;% 
+  group_by(song) %&gt;% 
+  summarise(mean_pol = mean(polarity)) 
+
+# Most positive and most negative songs
+summ %&gt;% 
+  arrange(desc(mean_pol)) %&gt;% 
+  slice(c(1:15, 121:135)) %&gt;% 
+  mutate(situation = rep(c('+positivas', '+negativas'), each = 15)) %&gt;% 
+  ggplot(aes(reorder(song, mean_pol), mean_pol)) +
+  geom_linerange(aes(ymin = min(mean_pol), ymax = mean_pol, 
+                     x = reorder(song, mean_pol)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  facet_wrap(~situation, scales = "free") +
+  coord_flip() +
+  labs(x = 'Músicas', y = 'Polaridades') +
+  theme_bw()
+```
+
+---
+
+
+--- 
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-29-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# Parte 2. Acordes
+
+Pacotes extra:
+  - `ggridges`
+  - `chorddiag`
+
+---
+
+# Parte 2. Acordes
+
+
+```r
+# Removendo enarmonias
+chords &lt;- all_data %&gt;%
+  select(chord, song) %&gt;% 
+  dplyr::mutate(chord = case_when( 
+    chord == "Gb" ~ "F#",
+    chord == "C#" ~ "Db",          
+    chord == "G#" ~ "Ab",
+    chord == "A#" ~ "Bb",
+    chord == "D#" ~ "Eb",
+    chord == "E#" ~ "F",
+    chord == "B#" ~ "C",
+    TRUE ~ chord)) 
+
+# Top 20 músicas com uma maior quantidade de acordes
+chords %&gt;% 
+  dplyr::group_by(song, chord) %&gt;% 
+  dplyr::summarise(distintos = n_distinct(chord)) %&gt;% 
+  dplyr::summarise(cont = n()) %&gt;% 
+  dplyr::mutate(song = fct_reorder(song, cont)) %&gt;% 
+  top_n(n = 20) %&gt;% 
+  ggplot(aes(y = cont, x = song)) +
+  geom_bar(colour = 'dodgerblue4', fill = 'darksalmon',
+           size = 0.5, alpha = 0.6, stat = "identity") +
+  labs(x = 'Músicas', y = 'Contagem de Acordes Distintos') +
+  coord_flip() +
+  theme_bw()
+```
+
+---
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-31-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+# Extraindo variáveis dos acordes
+
+
+```r
+feat_chords &lt;- all_data %&gt;%
+  select(chord, song) %&gt;% 
+  chorrrds::feature_extraction() %&gt;% 
+  select(-chord) %&gt;% 
+  group_by(song) %&gt;% 
+  summarise_all(mean)
+
+dt &lt;- feat_chords %&gt;% 
+  tidyr::gather(group, vars, minor, seventh, 
+                seventh_M, sixth, fifth_dim, fifth_aug, 
+                fourth, ninth, bass, dimi, augm)
+```
+
+
+---
+# Extraindo variáveis dos acordes
+
+
+```r
+glimpse(feat_chords)
+```
+
+```
+## Observations: 135
+## Variables: 13
+## $ song      &lt;chr&gt; "a banda", "a bela e a fera", "a cidade ideal", "a gal…
+## $ minor     &lt;dbl&gt; 0.28282828, 0.43939394, 0.15294118, 0.07317073, 0.0000…
+## $ dimi      &lt;dbl&gt; 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.0000…
+## $ augm      &lt;dbl&gt; 0.00000000, 0.00000000, 0.02352941, 0.00000000, 0.0000…
+## $ sus       &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …
+## $ seventh   &lt;dbl&gt; 0.7878788, 0.9090909, 0.5294118, 0.4390244, 1.0000000,…
+## $ seventh_M &lt;dbl&gt; 0.04040404, 0.00000000, 0.02352941, 0.00000000, 0.0000…
+## $ sixth     &lt;dbl&gt; 0.17171717, 0.12121212, 0.00000000, 0.00000000, 0.2673…
+## $ fourth    &lt;dbl&gt; 0.00000000, 0.34848485, 0.00000000, 0.00000000, 0.1386…
+## $ fifth_aug &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …
+## $ fifth_dim &lt;dbl&gt; 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.0000…
+## $ ninth     &lt;dbl&gt; 0.31313131, 0.50000000, 0.00000000, 0.00000000, 0.7871…
+## $ bass      &lt;dbl&gt; 0.10101010, 0.03030303, 0.07058824, 0.00000000, 0.1386…
+```
+
+---
+
+
+```r
+library(ggridges)
+
+dt$group &lt;- forcats::lvls_revalue(
+  dt$group,
+  c("Augmented", "Bass", "Diminished", 
+    "Aug. Fifth", "Dim. Fifth", 
+    "Fourth", "Minor", "Ninth", "Seventh",
+    "Major Seventh", "Sixth"))
+
+# Plotting densities of the extracted features
+dt %&gt;% 
+  ggplot(aes(vars, group, fill = group)) +
+  geom_density_ridges(alpha = 0.6) +
+  scale_fill_cyclical(values = c("dodgerblue4", "darksalmon")) +
+  guides(fill = FALSE) +
+  xlim(0, 1) +
+  labs(x = "Densities", y = "Extracted variables") +
+  theme_bw()
+```
+
+---
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-35-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Diagramas de cordas
+
+
+```r
+# Contando as transições entre os acordes
+comp &lt;- chords %&gt;% 
+  dplyr::mutate(
+    # Colocando os acordes na forma mais simples
+    chord_clean = stringr::str_extract(chord, pattern = "^([A-G]#?b?)"),
+    seq = lead(chord_clean)) %&gt;% 
+  dplyr::filter(chord_clean != seq) %&gt;% 
+  dplyr::group_by(chord_clean, seq) %&gt;%  
+  dplyr::summarise(n = n())
+
+mat &lt;- tidyr::spread(comp, key = chord_clean, value = n, fill = 0)  
+mm &lt;- as.matrix(mat[, -1]) 
+
+# Construindo o diagrama
+chorddiag::chorddiag(mm, showTicks = FALSE,
+                     palette = "Blues")
+```
+
+---
+
+# Diagramas de cordas
+
+<div id="htmlwidget-6b2fa4c34b18763338e1" style="width:504px;height:504px;" class="chorddiag html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6b2fa4c34b18763338e1">{"x":{"matrix":[[0,1,8,82,83,133,49,124,10,0,694,25,66,50,105,14,2],[21,0,0,6,3,0,2,0,0,0,9,0,2,2,1,2,0],[32,0,0,6,6,32,0,10,0,6,4,55,23,3,25,0,0],[164,9,10,0,28,98,26,64,2,3,91,0,43,342,48,13,5],[16,0,16,42,0,31,4,58,1,5,28,18,130,9,41,4,4],[70,6,26,50,46,0,25,36,3,30,100,21,98,16,447,2,1],[32,0,1,28,11,49,0,47,0,1,70,3,1,26,24,110,0],[549,1,7,32,43,60,15,0,12,1,59,94,69,44,117,12,1],[3,3,0,2,1,4,4,30,0,0,13,0,0,3,1,0,0],[2,0,18,1,3,5,0,11,0,0,3,5,0,1,10,2,2],[173,15,2,569,20,74,22,79,11,3,0,15,133,31,112,18,0],[23,0,16,7,76,27,0,56,0,2,15,0,17,6,28,2,0],[104,0,10,7,32,305,30,62,1,1,46,15,0,30,61,6,10],[81,11,2,32,3,37,186,41,1,0,61,0,29,0,117,13,2],[103,2,79,54,44,117,22,489,3,3,58,23,99,38,0,32,5],[72,0,2,28,8,1,18,10,20,0,26,1,1,15,28,0,0],[0,0,5,0,0,4,0,0,0,8,0,0,9,0,6,0,0]],"options":{"type":"directional","width":null,"height":null,"margin":100,"showGroupnames":true,"groupNames":["A","A#","Ab","B","Bb","C","C#","D","D#","Db","E","Eb","F","F#","G","G#","Gb"],"groupColors":["#F7FBFF","#DEEBF7","#C6DBEF","#9ECAE1","#6BAED6","#4292C6","#2171B5","#08519C","#08306B"],"groupThickness":0.1,"groupPadding":0.0349065850398866,"groupnamePadding":[30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30],"groupnameFontsize":18,"groupedgeColor":null,"chordedgeColor":"#808080","categoryNames":null,"categorynamePadding":100,"categorynameFontsize":28,"showTicks":false,"tickInterval":10,"ticklabelFontsize":10,"fadeLevel":0.1,"showTooltips":true,"showZeroTooltips":true,"tooltipNames":["A","A#","Ab","B","Bb","C","C#","D","D#","Db","E","Eb","F","F#","G","G#","Gb"],"tooltipFontsize":12,"tooltipUnit":"","tooltipGroupConnector":" &#x25B6; ","precision":"null","clickAction":null,"clickGroupAction":null}},"evals":[],"jsHooks":[]}</script>
+
+
+---
+
+# Parte 3. Variáveis do Spotify
+
+
+```r
+spot &lt;- all_data %&gt;% 
+  group_by(song) %&gt;% 
+  slice(1) %&gt;% 
+  ungroup()
+
+# Densidade da popularidade das músicas
+spot %&gt;% 
+  ggplot(aes(popul)) +
+  geom_density(colour = 'dodgerblue4',
+               fill = "darksalmon", 
+               alpha = 0.8) +
+  labs(x = "Popularidade", y = "Densidade") +
+  theme_bw()
+```
+
+---
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-39-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Músicas mais e menos populares
+
+
+```r
+spot %&gt;% 
+  arrange(desc(popul)) %&gt;%  
+  slice(c(1:15, 121:135)) %&gt;% 
+  mutate(situation = rep(c('+popul', '-popul'), each = 15)) %&gt;% 
+  select(popul, situation, song) %&gt;% 
+  ggplot(aes(reorder(song, popul), popul, group = 1)) +
+  geom_bar(colour = 'dodgerblue4',  fill = "darksalmon", 
+           size = 0.3, alpha = 0.6, 
+           stat = "identity") +
+  facet_wrap(~situation, scales = "free") +
+  coord_flip() +
+  labs(x = 'Músicas', y = 'Popularidade') +
+  theme_bw()
+```
+
+---
+
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-41-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Dançabilidade `x` as outras variáveis
+
+
+```r
+dt &lt;- spot %&gt;% 
+  select(energy,  
+          loudness, speechiness, liveness, duration_ms, 
+          acousticness) %&gt;% 
+  tidyr::gather(group, vars) 
+
+dt$danceability &lt;- spot$danceability
+
+dt %&gt;% 
+ggplot(aes(danceability, vars)) +
+  geom_point(colour = "darksalmon") +  
+  geom_smooth(method  = "lm", colour = "dodgerblue4") +
+  labs(x = "Dançabilidade", y = "Variáveis") +
+  facet_wrap(~group, scales = "free") +
+  theme_bw()
+```
+
+---
+
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-43-1.png" style="display: block; margin: auto;" /&gt;
 
 
 ---
 
 class: bottom, center, inverse
 
+# Modelagem
+
+---
+
+# Modelagem
+
+Vamos considerar agora que temos um interesse especial na popularidade
+das músicas. Quais variáveis seriam mais associadas com altos ou baixos
+níveis de popularidade?
+
+Para começar, transformamos a popularidade em uma variável
+de 3 classes:
+
+
+```r
+library(randomForest)
+
+spot &lt;- spot %&gt;% 
+  mutate(pop_class = ifelse(
+    popul &lt; quantile(popul, 0.33), "pouco popular",
+    ifelse(popul &lt; quantile(popul, 0.66), "neutro", "popular")))
+
+spot %&gt;% 
+  janitor::tabyl(pop_class)
+```
+
+```
+##      pop_class  n   percent
+##         neutro 46 0.3407407
+##        popular 47 0.3481481
+##  pouco popular 42 0.3111111
+```
+
+---
+**Arrumando os dados a fim de deixá-los prontos para a modelagem**
+
+
+```r
+# Unindo as bases anteriores e arrumando
+model_data &lt;- feat_chords %&gt;% 
+  right_join(spot, by = c("song" = "song")) %&gt;% 
+  right_join(summ, by = c("song" = "song")) %&gt;% 
+  select(-analysis_url, -uri, -id.x, -id.y, -song, 
+         -name, -text, -lang, -chord, -long_str,
+         -key.x, -song.id, -sus, 
+         -popul) %&gt;% 
+  mutate(pop_class = as.factor(pop_class)) %&gt;% 
+  # Separando em treino e teste
+  mutate(part = ifelse(runif(nrow(.)) &gt; 0.25, "treino", "teste"))
+
+model_data %&gt;% 
+  janitor::tabyl(part)
+```
+
+```
+##    part   n   percent
+##   teste  29 0.2148148
+##  treino 106 0.7851852
+```
+
+---
+
+Separando em base de treino (75%) e teste (25%):
+
+```r
+train &lt;- model_data %&gt;% 
+  filter(part == "treino") %&gt;% 
+  select(-part)
+
+test &lt;- model_data %&gt;% 
+  filter(part == "teste") %&gt;% 
+  select(-part)
+```
+
+O modelo vai ser do tipo:
+
+` pop_class ~ minor + dimi + augm + seventh + seventh_M + sixth + fourth + fifth_aug + fifth_dim + ninth + bass + danceability + energy + key.y + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + time_signature + mean_pol `
+
+---
+
+
+```r
+m0 &lt;- randomForest(pop_class ~ ., data = train, 
+                   ntree = 1000)
+m0
+```
+
+```
+## 
+## Call:
+##  randomForest(formula = pop_class ~ ., data = train, ntree = 1000) 
+##                Type of random forest: classification
+##                      Number of trees: 1000
+## No. of variables tried at each split: 5
+## 
+##         OOB estimate of  error rate: 55.66%
+## Confusion matrix:
+##               neutro popular pouco popular class.error
+## neutro             7      16            12   0.8000000
+## popular            9      26             2   0.2972973
+## pouco popular     11       9            14   0.5882353
+```
+
+---
+**Visualizando a importância das variáveis**
+
+```r
+imp0 &lt;- randomForest::importance(m0)
+imp0 &lt;- data.frame(var = dimnames(imp0)[[1]], 
+                   value = c(imp0))
+
+imp0 %&gt;% 
+  arrange(var, value) %&gt;% 
+  mutate(var = fct_reorder(factor(var),  value,  min)) %&gt;% 
+  ggplot(aes(var, value)) +
+  geom_point(size = 3.5, colour = "darksalmon") +
+  coord_flip() +
+  labs(
+       x = "Variáveis", y = "Diminuição no critério de Gini") +
+  theme_bw()
+```
+
+---
+**Visualizando a importância das variáveis**
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-49-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+# Medindo a acurácia na base de teste
+
+
+```r
+pred &lt;- predict(m0, test)
+
+sum(pred == test$pop_class)/nrow(test)
+```
+
+```
+## [1] 0.4827586
+```
+
+```r
+mean(m0$err.rate[,1])
+```
+
+```
+## [1] 0.5522178
+```
+
+**Como melhorar o modelo?**
+
+
+```r
+corrplot::corrplot(cor(train %&gt;% select_if(is.numeric), method = "spearman"))
+```
+
+
+---
+
+---
+
+---
+class: bottom, center, inverse
+
 &lt;font size="30"&gt;Obrigada! &lt;/font&gt;
-
-
-&lt;img src="img/rladies.png" width="50%" style="display: block; margin: auto;" /&gt;
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script src="https://platform.twitter.com/widgets.js"></script>
