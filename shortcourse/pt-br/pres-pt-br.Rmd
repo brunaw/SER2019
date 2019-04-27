@@ -21,7 +21,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = 'center',
                       warning = FALSE, message = FALSE, 
-                      eval = FALSE, cache = TRUE)
+                      eval = FALSE, cache = FALSE)
 library(tidyverse)
 ```
 
@@ -101,10 +101,10 @@ library(tidyverse)
 # Conectando às APIs
 ## `vagalumeR`
 Passos:
-  1. Entrar em `https://auth.vagalume.com.br/ ` e logar,
-  2. Entrar em `https://auth.vagalume.com.br/settings/api/` e criar um 
+  1. Entrar em [`https://auth.vagalume.com.br/`](https://auth.vagalume.com.br/) e logar,
+  2. Entrar em [`https://auth.vagalume.com.br/settings/api/`](https://auth.vagalume.com.br/settings/api/) e criar um 
   aplicativo,
-  3. Entrar em `https://auth.vagalume.com.br/settings/api/` novamente 
+  3. Entrar em [`https://auth.vagalume.com.br/settings/api/`](https://auth.vagalume.com.br/settings/api/) novamente 
   e copiar a credencial do aplicativo. 
   4. Salvar a credencial em um objeto, como:
   
@@ -117,12 +117,12 @@ key_vagalume <- "minha-credencial"
 ## `Rspotify`
 
 Passos:
-  1. Entrar em `https://developer.spotify.com/` e logar, 
-  2. Entrar em `https://developer.spotify.com/dashboard/` e criar um 
+  1. Entrar em [`https://developer.spotify.com/`](https://developer.spotify.com/) e logar, 
+  2. Entrar em [`https://developer.spotify.com/dashboard/`](https://developer.spotify.com/dashboard/) e criar um 
   aplicativo,
   3. Salvar o **client ID** e o **client Secret** gerados, 
   4. Definir a como URL de redirecionamento como `http://localhost:1410/`,
-  5. Usar a função `spotifyOAuth` para autenticar o acesso:
+  5. Usar a função `spotifyOAuth()` para autenticar o acesso:
   
 ```{r, eval = FALSE}
 library(Rspotify)
@@ -411,7 +411,7 @@ Pacotes extra:
   
 
 ```{r, echo = FALSE, eval = TRUE}
-all_data <- read.table("all_data.txt", stringsAsFactors = FALSE)
+all_data <- read.table("../../all_data.txt", stringsAsFactors = FALSE)
 ```
 
 
