@@ -154,8 +154,7 @@ estes IDs para funções específicas;
 
 ---
 
-# `vagalumeR`
-
+## `vagalumeR`
 
 ```{r, eval = FALSE}
 # 1. Definir artista
@@ -172,7 +171,7 @@ lyrics <-  songs %>%
              artist = artist,
              type = "id", 
              key = key_vagalume) %>%
-  purrr::map_df(data.frame) %>% 
+  purrr::map_dfr(data.frame) %>% 
   dplyr::select(-song) %>% 
   dplyr::right_join(songs %>% 
                       dplyr::select(song, song.id), by = "song.id")
@@ -180,7 +179,7 @@ lyrics <-  songs %>%
 
 ---
 
-# `RSpotify`
+## `RSpotify`
 
 ```{r, eval = FALSE}
 # 1. "Buscar" o artist usando a API
@@ -204,10 +203,7 @@ ids <- albums_res %>%
 
 # 4. Obter as variáveis para cada música
 features <- ids %>% 
-  purrr::map_df(
-    ~{
-      getFeatures(.x, token = key_spotify) 
-    }) %>% 
+  purrr::map_dfr(~getFeatures(.x, token = key_spotify)) %>% 
   dplyr::left_join(albums_res, by = "id")
 ```
 
@@ -217,8 +213,8 @@ features <- ids %>%
 ```{r, eval = FALSE}
 # 5. Criar uma função simples para pegar a popularidade
 getPop <- function(id, token){
-  req <- httr::GET(paste0("https://api.spotify.com/v1/tracks/", id), 
-                   httr::config(token = token))
+  u <- paste0("https://api.spotify.com/v1/tracks/", id)
+  req <- httr::GET(u, httr::config(token = token))
   json1 <- httr::content(req)
   res <- data.frame(song = json1$name, 
                     popul = json1$popularity, 
@@ -229,17 +225,13 @@ getPop <- function(id, token){
 # 6. Mapear essa função nos IDs das músicas
 popul <-  features %>% 
   dplyr::pull(id) %>% 
-  purrr::map_df(
-    ~{
-      getPop(.x, token = key_spotify) 
-    }) 
+  purrr::map_dfr(~getPop(.x, token = key_spotify)) 
 
 # 7. Juntar a popularidade com o resto das variáveis 
 features <- features %>% 
   dplyr::right_join(
     popul %>% dplyr::select(-song), 
     by = c("id" = "id"))
-
 ```
 
 ---
@@ -266,7 +258,7 @@ songs <- "chico-buarque" %>%
 chords <- songs %>% 
   dplyr::pull(url) %>%                     
   purrr::map(chorrrds::get_chords) %>%    
-  purrr::map_dfr(dplyr::mutate_if, is.factor, as.character)   %>% 
+  purrr::map_dfr(dplyr::mutate_if, is.factor, as.character) %>% 
   chorrrds::clean(message = FALSE) 
 ```
 
@@ -301,7 +293,7 @@ all_data <- chords %>%
 
 ```{r, eval = FALSE}
 nrow(chords) - nrow(all_data) 
->  8973
+#> 8973
 ```
 
 ```{r, eval = FALSE}
@@ -309,34 +301,35 @@ nrow(chords) - nrow(all_data)
 # entre os nomes das músicas
 library(RecordLinkage)
 
-# O que tem de unmatch entre as bases de letras e acordes 
+# 1. O que tem de unmatch entre as bases de letras e acordes 
 anti_chords_lyrics <- chords %>% dplyr::anti_join(lyrics, by = "song") 
 
-# Salvando os nomes para corrigir
+# 2. Salvando os nomes para corrigir
 names_to_fix <- anti_chords_lyrics %>% 
   dplyr::distinct(song) %>% 
   dplyr::pull(song)
 
-# Calculando as 'distâncias' entre as músicas da base de letras e as que deram
+# 3. Calculando as 'distâncias' entre as músicas 
+# da base de letras e as que deram
 # unmatch na base de acordes
 dists <- lyrics$song %>% 
   purrr::map(levenshteinSim, str1 = names_to_fix)
 
-# Encontrando os nomes de músicas mais similares nas duas bases
-ordered_dists <- dists %>% purrr::map_dbl(max)
-max_dists <- dists %>% purrr::map_dbl(which.max)
-
-# Filtrando as que tem similaridade > 0.70
-indexes_min_dist <- which(ordered_dists > 0.70)
-songs_min_dist <- lyrics$song[indexes_min_dist]
-index_lyrics <- max_dists[which(ordered_dists > 0.70)]
 ```
 
 ---
 
-
 ```{r, eval = FALSE}
-# Salvando as mais similares em um data.frame 
+# 4. Encontrando os nomes de músicas mais similares nas duas bases
+ordered_dists <- dists %>% purrr::map_dbl(max)
+max_dists <- dists %>% purrr::map_dbl(which.max)
+
+# 5. Filtrando as que tem similaridade > 0.70
+indexes_min_dist <- which(ordered_dists > 0.70)
+songs_min_dist <- lyrics$song[indexes_min_dist]
+index_lyrics <- max_dists[which(ordered_dists > 0.70)]
+
+# 6. Salvando as mais similares em um data.frame 
 results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
                                   from_lyrics = songs_min_dist)
 
@@ -354,7 +347,7 @@ results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
 
 ---
 
-# Alterando os dados muito similares
+## Arrumando dados similares
 
 ```{r, eval = FALSE}
 chords <- chords %>% 
@@ -373,7 +366,9 @@ chords <- chords %>%
 
 ```
 
-Como criar a sintaxe anterior facilmente: 
+--
+
+Dica: Como criar a sintaxe anterior facilmente: 
 ```{r, eval = FALSE}
 cat(
   paste0("song == ", "'", results_dist_lyrics$from_chords, "' ~ '", 
@@ -639,9 +634,6 @@ summ %>%
   theme_bw()
 ```
 
----
-
-
 --- 
 
 ```{r, eval = TRUE, echo = FALSE}
@@ -691,7 +683,13 @@ chords <- all_data %>%
     chord == "E#" ~ "F",
     chord == "B#" ~ "C",
     TRUE ~ chord)) 
+```
 
+---
+
+# Parte 2. Acordes
+
+```{r}
 # Top 20 músicas com uma maior quantidade de acordes
 chords %>% 
   dplyr::group_by(song, chord) %>% 
@@ -705,8 +703,6 @@ chords %>%
   labs(x = 'Músicas', y = 'Contagem de Acordes Distintos') +
   coord_flip() +
   theme_bw()
-
-
 ```
 
 ---
@@ -763,7 +759,7 @@ dt <- feat_chords %>%
 # Extraindo variáveis dos acordes
 
 ```{r, eval = TRUE}
-glimpse(feat_chords)
+dplyr::glimpse(feat_chords)
 ```
 
 ---
@@ -842,7 +838,7 @@ chorddiag::chorddiag(mm, showTicks = FALSE,
 
 # Diagramas de cordas
 
-```{r, eval = TRUE, echo = FALSE, fig.align="center"}
+```{r, eval = TRUE, echo = FALSE, fig.align="center", out.width="100%"}
 # Contando as transições entre os acordes
 comp <- chords %>% 
   dplyr::mutate(
@@ -1073,8 +1069,7 @@ imp0 %>%
   ggplot(aes(var, value)) +
   geom_point(size = 3.5, colour = "darksalmon") +
   coord_flip() +
-  labs(
-       x = "Variáveis", y = "Diminuição no critério de Gini") +
+  labs(x = "Variáveis", y = "Diminuição no critério de Gini") +
   theme_bw()
 
 ```
@@ -1092,8 +1087,7 @@ imp0 %>%
   ggplot(aes(var, value)) +
   geom_point(size = 3.5, colour = "darksalmon") +
   coord_flip() +
-  labs(
-       x = "Variáveis", y = "Diminuição no critério de Gini") +
+  labs(x = "Variáveis", y = "Diminuição no critério de Gini") +
   theme_bw()
 
 ```
@@ -1111,7 +1105,8 @@ mean(m0$err.rate[,1])
 **Como melhorar o modelo?**
 
 ```{r}
-corrplot::corrplot(cor(train %>% select_if(is.numeric), method = "spearman"))
+corrplot::corrplot(cor(train %>% select_if(is.numeric), 
+                       method = "spearman"))
 ```
 
 
