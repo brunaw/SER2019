@@ -509,12 +509,11 @@ unnested %>%
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
   labs(x = 'Top 30 palavras mais comuns', y = 'Contagem') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 
 ---
-# 1-grams 
 
 ```{r, fig.width=5.5, fig.height=6, echo = FALSE, eval = TRUE}
 unnested %>% 
@@ -528,7 +527,7 @@ unnested %>%
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
   labs(x = 'Top 30 palavras mais comuns', y = 'Contagem') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -567,7 +566,7 @@ all_data %>%
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
   labs(x = 'Top 30 2-grams mais comuns', y = 'Counts') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 
@@ -593,7 +592,7 @@ all_data %>%
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
   labs(x = 'Top 30 2-grams mais comuns', y = 'Contagem') +
-  theme_bw()
+  theme_bw(14)
 
 
 ```
@@ -638,13 +637,13 @@ add_sentiments %>%
   coord_flip() +
     labs(x = 'Top 15 palavras mais comuns', 
        y = 'Contagens', title = "Sentimentos") +
-  theme_bw()
+  theme_bw(14)
 ```
 
 
 ---
 
-```{r, echo = FALSE, eval = TRUE}
+```{r, echo = FALSE, eval = TRUE, fig.width=8}
 add_sentiments %>% 
   group_by(polarity) %>% 
   count(word) %>% 
@@ -659,7 +658,7 @@ add_sentiments %>%
   coord_flip() +
   labs(x = 'Top 15 palavras mais comuns', 
        y = 'Contagens', title = "Sentimentos") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -686,7 +685,7 @@ summ %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = 'Músicas', y = 'Polaridades') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 --- 
@@ -709,7 +708,7 @@ summ %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = 'Músicas', y = 'Polaridades') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 
@@ -720,10 +719,6 @@ summ %>%
 Pacotes extra:
   - `ggridges`
   - `chorddiag`
-
----
-
-# Parte 2. Acordes
 
 ```{r}
 # Removendo enarmonias
@@ -757,7 +752,7 @@ chords %>%
            size = 0.5, alpha = 0.6, stat = "identity") +
   labs(x = 'Músicas', y = 'Contagem de Acordes Distintos') +
   coord_flip() +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -788,7 +783,7 @@ chords %>%
            size = 0.5, alpha = 0.6, stat = "identity") +
   labs(x = 'Músicas', y = 'Contagem de Acordes Distintos') +
   coord_flip() +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -837,7 +832,7 @@ dt %>%
   guides(fill = FALSE) +
   xlim(0, 1) +
   labs(x = "Densities", y = "Extracted variables") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -861,7 +856,7 @@ dt %>%
   guides(fill = FALSE) +
   xlim(0, 1) +
   labs(x = "Densities", y = "Extracted variables") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -944,7 +939,7 @@ spot %>%
                fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -962,7 +957,7 @@ spot %>%
                fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -982,7 +977,7 @@ spot %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = 'Músicas', y = 'Popularidade') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -1001,7 +996,7 @@ spot %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = "Dançabilidade", y = "Variáveis") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -1024,7 +1019,7 @@ ggplot(aes(danceability, vars)) +
   geom_smooth(method  = "lm", colour = "dodgerblue4") +
   labs(x = "Dançabilidade", y = "Variáveis") +
   facet_wrap(~group, scales = "free") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -1045,7 +1040,7 @@ dt %>%
   geom_smooth(method  = "lm", colour = "dodgerblue4") +
   labs(x = "Dançabilidade", y = "Variáveis") +
   facet_wrap(~group, scales = "free") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -1138,8 +1133,7 @@ imp0 %>%
   geom_point(size = 3.5, colour = "darksalmon") +
   coord_flip() +
   labs(x = "Variáveis", y = "Diminuição no critério de Gini") +
-  theme_bw()
-
+  theme_bw(14)
 ```
 
 ---
@@ -1156,7 +1150,7 @@ imp0 %>%
   geom_point(size = 3.5, colour = "darksalmon") +
   coord_flip() +
   labs(x = "Variáveis", y = "Diminuição no critério de Gini") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
