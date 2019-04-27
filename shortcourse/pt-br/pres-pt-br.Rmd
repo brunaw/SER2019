@@ -87,6 +87,19 @@ R para extração & análise de dados musicais
 
 ---
 
+# Não se perca!
+
+- Se você travar em alguma parte, não hesite em nos chamar
+- Tenha ao seu lado as Cheatsheets da RStudio:
+
+https://www.rstudio.com/resources/cheatsheets/
+
+- Se precisar de um material em português, veja o site da Curso-R:
+
+https://curso-r.com/material/
+
+---
+
 # Carregando pacotes
 
 Principais: 
@@ -435,6 +448,22 @@ Pacotes extra:
 all_data <- read.table("../../all_data.txt", stringsAsFactors = FALSE)
 ```
 
+---
+
+# n-grams
+
+Pega as palavras e seus passados.
+
+```{r}
+nome1 <- "Geni e o Zepelim"
+tokenizers::tokenize_ngrams(nome1, n = 1)
+tokenizers::tokenize_ngrams(nome1, n = 2)
+tokenizers::tokenize_ngrams(nome1, n = 3)
+```
+
+- útil para guardar expressões mais complexas.
+- a função `unnest_tokens()` é separa e empilha os n-gramas de cada letra.
+
 
 ```{r, eval = TRUE}
 library(tidytext)
@@ -465,27 +494,13 @@ unnested %>%
 
 ---
 
-# n-grams
-
-Pega as palavras e seus passados.
-
-```{r}
-nome1 <- "Geni e o Zepelim"
-tokenizers::tokenize_ngrams(nome1, n = 1)
-tokenizers::tokenize_ngrams(nome1, n = 2)
-tokenizers::tokenize_ngrams(nome1, n = 3)
-```
-
-- útil para guardar expressões mais complexas.
-
----
-
 # 1-grams 
 
 ```{r, eval = FALSE}
 unnested %>% 
   dplyr::count(word) %>% 
-  dplyr::filter(n < quantile(n, 0.999)) %>% 
+  # tirar palavras que aparecem pouco
+  dplyr::filter(n < quantile(n, 0.999)) %>%
   dplyr::top_n(n = 30) %>% 
   ggplot(aes(reorder(word, n), n)) +
   geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
@@ -876,6 +891,19 @@ chorddiag::chorddiag(mm, showTicks = FALSE,
 
 ---
 
+# Expressões regulares (regex)
+
+- Mini-linguagem usada para representar textos
+- Para quem trabalha com texto, é indispensável saber regex
+- Regex são usadas dentro do pacote `stringr`
+- Para se aprofundar em regex:
+    - [Slides sobre regex](https://ctlente.com/pt/teaching/stringr-lubridate/)
+    - [Material online](https://www.curso-r.com/material/stringr/)
+    - [Cheat Sheet](https://github.com/rstudio/cheatsheets/raw/master/strings.pdf)
+    
+
+---
+
 # Diagramas de cordas
 
 ```{r, eval = TRUE, echo = FALSE, fig.align="center", out.width="100%"}
@@ -1012,7 +1040,7 @@ dt <- spot %>%
 dt$danceability <- spot$danceability
 
 dt %>% 
-ggplot(aes(danceability, vars)) +
+  ggplot(aes(danceability, vars)) +
   geom_point(colour = "darksalmon") +  
   geom_smooth(method  = "lm", colour = "dodgerblue4") +
   labs(x = "Dançabilidade", y = "Variáveis") +
