@@ -47,9 +47,10 @@ knitr::include_graphics("img/jubs.png")
 ```
 ].pull-right[
   **Julio Trecenti**
-  - Doutorando em Estatística no IME - USP
-  - 2
-  - 3
+  - Doutorando em Estatística no IME-USP
+  - Sócio da Curso-R
+  - Twitter: @jtrecenti
+  - GitHub: @jtrecenti3
 
   ]
 
@@ -63,7 +64,7 @@ knitr::include_graphics("img/jubs.png")
     
   - Entender como funciona a acesso a APIs em geral.
   - Conectar dados de diferentes fontes.
-  - Compreensão e resumo de dados em diferentes formatos:
+  - Compreender e resumir dados de diferentes formatos:
     - Texto
     - Contínuos
     - Sequências
@@ -76,8 +77,7 @@ knitr::include_graphics("img/jubs.png")
 
    - `R` iniciante/intermediário 
    - `tidyverse`
-    - `%>%` (pipe) é essencial! 
-    
+   - `%>%` (pipe) é essencial! 
     
 [**R-Music Blog**](https://r-music.rbind.io/) <img src="https://raw.githubusercontent.com/r-music/site/master/img/logo.png" style="float:left;margin-right:20px;" width=120>
 
