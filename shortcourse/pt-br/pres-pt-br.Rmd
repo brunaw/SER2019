@@ -445,7 +445,7 @@ Pacotes extra:
   
 
 ```{r, echo = FALSE, eval = TRUE}
-all_data <- read.table("../../all_data.txt", stringsAsFactors = FALSE)
+all_data <- read.table("all_data.txt", stringsAsFactors = FALSE)
 ```
 
 ---
@@ -831,7 +831,7 @@ dt %>%
   scale_fill_cyclical(values = c("dodgerblue4", "darksalmon")) +
   guides(fill = FALSE) +
   xlim(0, 1) +
-  labs(x = "Densities", y = "Extracted variables") +
+  labs(x = "Densidades", y = "Variáveis extraídas") +
   theme_bw(14)
 
 ```
@@ -1079,6 +1079,7 @@ spot %>%
 
 ```{r, eval = TRUE}
 # Unindo as bases anteriores e arrumando
+set.seed(1)
 model_data <- feat_chords %>% 
   right_join(spot, by = c("song" = "song")) %>% 
   right_join(summ, by = c("song" = "song")) %>% 
@@ -1088,7 +1089,7 @@ model_data <- feat_chords %>%
          -popul) %>% 
   mutate(pop_class = as.factor(pop_class)) %>% 
   # Separando em treino e teste
-  mutate(part = ifelse(runif(nrow(.)) > 0.25, "treino", "teste"))
+  mutate(part = ifelse(runif(n()) > 0.25, "treino", "teste"))
 
 model_data %>% 
   janitor::tabyl(part)
