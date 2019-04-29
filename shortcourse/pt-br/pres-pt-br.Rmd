@@ -47,9 +47,10 @@ knitr::include_graphics("img/jubs.png")
 ```
 ].pull-right[
   **Julio Trecenti**
-  - Doutorando em Estatística no IME - USP
-  - 2
-  - 3
+  - Doutorando em Estatística no IME-USP
+  - Sócio da Curso-R
+  - Twitter: @jtrecenti
+  - GitHub: @jtrecenti
 
   ]
 
@@ -63,27 +64,39 @@ knitr::include_graphics("img/jubs.png")
     
   - Entender como funciona a acesso a APIs em geral.
   - Conectar dados de diferentes fontes.
-  - Compreensão e resumo de dados em diferentes formatos:
+  - Compreender e resumir dados de diferentes formatos:
     - Texto
     - Contínuos
     - Sequências
   - Aprender a criar e interpretar um modelo de predição simples. 
 
-**Não abordado neste curso:** análise de aúdio. 
+**Não abordado neste curso:** análise de áudio. 
 
 ---
 # Requisitos & recursos
 
    - `R` iniciante/intermediário 
    - `tidyverse`
-    - `%>%` (pipe) é essencial! 
-    
+   - `%>%` (pipe) é essencial! 
     
 [**R-Music Blog**](https://r-music.rbind.io/) <img src="https://raw.githubusercontent.com/r-music/site/master/img/logo.png" style="float:left;margin-right:20px;" width=120>
 
 <h4 style="padding:0px;margin:10px;">
 R para extração & análise de dados musicais
 </h4>
+
+---
+
+# Não se perca!
+
+- Se você travar em alguma parte, não hesite em nos chamar
+- Tenha ao seu lado as Cheatsheets da RStudio:
+
+https://www.rstudio.com/resources/cheatsheets/
+
+- Se precisar de um material em português, veja o site da Curso-R:
+
+https://curso-r.com/material/
 
 ---
 
@@ -101,10 +114,10 @@ library(tidyverse)
 # Conectando às APIs
 ## `vagalumeR`
 Passos:
-  1. Entrar em `https://auth.vagalume.com.br/ ` e logar,
-  2. Entrar em `https://auth.vagalume.com.br/settings/api/` e criar um 
+  1. Entrar em [`https://auth.vagalume.com.br/`](https://auth.vagalume.com.br/) e logar,
+  2. Entrar em [`https://auth.vagalume.com.br/settings/api/`](https://auth.vagalume.com.br/settings/api/) e criar um 
   aplicativo,
-  3. Entrar em `https://auth.vagalume.com.br/settings/api/` novamente 
+  3. Entrar em [`https://auth.vagalume.com.br/settings/api/`](https://auth.vagalume.com.br/settings/api/) novamente 
   e copiar a credencial do aplicativo. 
   4. Salvar a credencial em um objeto, como:
   
@@ -117,12 +130,12 @@ key_vagalume <- "minha-credencial"
 ## `Rspotify`
 
 Passos:
-  1. Entrar em `https://developer.spotify.com/` e logar, 
-  2. Entrar em `https://developer.spotify.com/dashboard/` e criar um 
+  1. Entrar em [`https://developer.spotify.com/`](https://developer.spotify.com/) e logar, 
+  2. Entrar em [`https://developer.spotify.com/dashboard/`](https://developer.spotify.com/dashboard/) e criar um 
   aplicativo,
   3. Salvar o **client ID** e o **client Secret** gerados, 
   4. Definir a como URL de redirecionamento como `http://localhost:1410/`,
-  5. Usar a função `spotifyOAuth` para autenticar o acesso:
+  5. Usar a função `spotifyOAuth()` para autenticar o acesso:
   
 ```{r, eval = FALSE}
 library(Rspotify)
@@ -145,17 +158,15 @@ class: bottom, center, inverse
 
 # Introdução
 
-- Para todos os pacotes, existe um fluxo a ser seguido.
+- Para cada pacote, existe um fluxo a ser seguido.
 
-- O fluxo involve, basicamente, obter os IDs dos obejtos dos quais
-queremos as informações (como artistas, albúns, músicas) e passar
-estes IDs para funcões específicas;
-
+- O fluxo envolve, basicamente, obter os IDs dos objetos dos quais
+queremos as informações (como artistas, álbuns, músicas) e passar
+estes IDs para funções específicas;
 
 ---
 
-# `vagalumeR`
-
+## `vagalumeR`
 
 ```{r, eval = FALSE}
 # 1. Definir artista
@@ -172,7 +183,7 @@ lyrics <-  songs %>%
              artist = artist,
              type = "id", 
              key = key_vagalume) %>%
-  purrr::map_df(data.frame) %>% 
+  purrr::map_dfr(data.frame) %>% 
   dplyr::select(-song) %>% 
   dplyr::right_join(songs %>% 
                       dplyr::select(song, song.id), by = "song.id")
@@ -180,7 +191,7 @@ lyrics <-  songs %>%
 
 ---
 
-# `RSpotify`
+## `RSpotify`
 
 ```{r, eval = FALSE}
 # 1. "Buscar" o artist usando a API
@@ -204,10 +215,7 @@ ids <- albums_res %>%
 
 # 4. Obter as variáveis para cada música
 features <- ids %>% 
-  purrr::map_df(
-    ~{
-      getFeatures(.x, token = key_spotify) 
-    }) %>% 
+  purrr::map_dfr(~getFeatures(.x, token = key_spotify)) %>% 
   dplyr::left_join(albums_res, by = "id")
 ```
 
@@ -217,8 +225,8 @@ features <- ids %>%
 ```{r, eval = FALSE}
 # 5. Criar uma função simples para pegar a popularidade
 getPop <- function(id, token){
-  req <- httr::GET(paste0("https://api.spotify.com/v1/tracks/", id), 
-                   httr::config(token = token))
+  u <- paste0("https://api.spotify.com/v1/tracks/", id)
+  req <- httr::GET(u, httr::config(token = token))
   json1 <- httr::content(req)
   res <- data.frame(song = json1$name, 
                     popul = json1$popularity, 
@@ -229,17 +237,13 @@ getPop <- function(id, token){
 # 6. Mapear essa função nos IDs das músicas
 popul <-  features %>% 
   dplyr::pull(id) %>% 
-  purrr::map_df(
-    ~{
-      getPop(.x, token = key_spotify) 
-    }) 
+  purrr::map_dfr(~getPop(.x, token = key_spotify)) 
 
 # 7. Juntar a popularidade com o resto das variáveis 
 features <- features %>% 
   dplyr::right_join(
     popul %>% dplyr::select(-song), 
     by = c("id" = "id"))
-
 ```
 
 ---
@@ -266,14 +270,14 @@ songs <- "chico-buarque" %>%
 chords <- songs %>% 
   dplyr::pull(url) %>%                     
   purrr::map(chorrrds::get_chords) %>%    
-  purrr::map_dfr(dplyr::mutate_if, is.factor, as.character)   %>% 
+  purrr::map_dfr(dplyr::mutate_if, is.factor, as.character) %>% 
   chorrrds::clean(message = FALSE) 
 ```
 
 
 ---
 
-# Combinando as diferentes bases
+# Combinando as bases
 
 ```{r, eval = FALSE}
 # Padronizar o nome da coluna chave e usar uma função de união, 
@@ -301,42 +305,65 @@ all_data <- chords %>%
 
 ```{r, eval = FALSE}
 nrow(chords) - nrow(all_data) 
->  8973
+#> 8973
 ```
+
+--
+
+- Resolver esses casos manualmente pode dar muito trabalho.
+- Uma forma de resolver automaticamente é calculando as similaridades entre os nomes.
+- Uma forma de medir a distância entre os nomes é verificando se um nome é igual ao outro a menos de uma, duas ou três letras. Por exemplo:
+
+```{r}
+nome1 <- "Geni e o Zepelim"
+nome2 <- "Geni e o Zepelin"
+# Calcula a distância
+RecordLinkage::levenshteinDist(nome1, nome2)
+# Calcula a similaridade = 1 -  dist / str_length(maior_nome)
+RecordLinkage::levenshteinSim(nome1, nome2)
+```
+
+- Quando os nomes são diferentes, pegamos o nome que tem maior similaridade.
+- Às vezes não existe um match, então é bom escolher um valor de corte (arbitrário) para a similaridade.
+
+---
+
+# Arrumando os nomes
 
 ```{r, eval = FALSE}
 # Vamos arrumar algumas linhas avaliando as distâncias
 # entre os nomes das músicas
-library(RecordLinkage)
 
-# O que tem de unmatch entre as bases de letras e acordes 
-anti_chords_lyrics <- chords %>% dplyr::anti_join(lyrics, by = "song") 
+# 1. O que tem em acordes que nao tem em letras?
+anti_chords_lyrics <- chords %>% 
+  dplyr::anti_join(lyrics, by = "song") 
 
-# Salvando os nomes para corrigir
+# 2. Salvando os nomes para corrigir
 names_to_fix <- anti_chords_lyrics %>% 
   dplyr::distinct(song) %>% 
   dplyr::pull(song)
 
-# Calculando as 'distâncias' entre as músicas da base de letras e as que deram
+# 3. Calculando as 'distâncias' entre as músicas 
+# da base de letras e as que deram
 # unmatch na base de acordes
 dists <- lyrics$song %>% 
-  purrr::map(levenshteinSim, str1 = names_to_fix)
+  purrr::map(RecordLinkage::levenshteinSim, str1 = names_to_fix)
 
-# Encontrando os nomes de músicas mais similares nas duas bases
-ordered_dists <- dists %>% purrr::map_dbl(max)
-max_dists <- dists %>% purrr::map_dbl(which.max)
-
-# Filtrando as que tem similaridade > 0.70
-indexes_min_dist <- which(ordered_dists > 0.70)
-songs_min_dist <- lyrics$song[indexes_min_dist]
-index_lyrics <- max_dists[which(ordered_dists > 0.70)]
 ```
 
 ---
 
-
 ```{r, eval = FALSE}
-# Salvando as mais similares em um data.frame 
+# 4. Encontrando os nomes de músicas mais similares nas duas bases
+ordered_dists <- dists %>% purrr::map_dbl(max)
+max_dists <- dists %>% purrr::map_dbl(which.max)
+
+# 5. Filtrando as que tem similaridade > 0.70
+indexes_min_dist <- which(ordered_dists > 0.70)
+songs_min_dist <- lyrics$song[indexes_min_dist]
+index_lyrics <- max_dists[which(ordered_dists > 0.70)]
+
+# 6. Salvando as mais similares em um data.frame 
 results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
                                   from_lyrics = songs_min_dist)
 
@@ -348,13 +375,17 @@ results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
 
 *logo eu* e *logo eu?*, 
 
-*nao fala de maria* e *não fala de maria*,
+*não fala de maria* e *não fala de maria*,
 
 ... 
 
+--
+
+Agora sobraram menos problemas; vamos arrumá-los manualmente.
+
 ---
 
-# Alterando os dados muito similares
+## Arrumando manualmente
 
 ```{r, eval = FALSE}
 chords <- chords %>% 
@@ -373,7 +404,10 @@ chords <- chords %>%
 
 ```
 
-Como criar a sintaxe anterior facilmente: 
+--
+
+Dica: Como criar a sintaxe anterior facilmente: 
+
 ```{r, eval = FALSE}
 cat(
   paste0("song == ", "'", results_dist_lyrics$from_chords, "' ~ '", 
@@ -390,7 +424,7 @@ all_data <- chords %>%
   dplyr::inner_join(lyrics, by = "song") %>% 
   dplyr::inner_join(features, by = "song")
 
-# Salvando os dados!
+# Finalmente salvando os dados!
 write.table(all_data, "all_data.txt")
 ```
 
@@ -413,6 +447,22 @@ Pacotes extra:
 ```{r, echo = FALSE, eval = TRUE}
 all_data <- read.table("all_data.txt", stringsAsFactors = FALSE)
 ```
+
+---
+
+# n-grams
+
+Pega as palavras e seus passados.
+
+```{r}
+nome1 <- "Geni e o Zepelim"
+tokenizers::tokenize_ngrams(nome1, n = 1)
+tokenizers::tokenize_ngrams(nome1, n = 2)
+tokenizers::tokenize_ngrams(nome1, n = 3)
+```
+
+- útil para guardar expressões mais complexas.
+- a função `unnest_tokens()` é separa e empilha os n-gramas de cada letra.
 
 
 ```{r, eval = TRUE}
@@ -440,7 +490,6 @@ unnested %>%
   dplyr::count(word) %>% 
   arrange(desc(n)) %>% 
   slice(1:10)
-
 ```
 
 ---
@@ -450,7 +499,8 @@ unnested %>%
 ```{r, eval = FALSE}
 unnested %>% 
   dplyr::count(word) %>% 
-  dplyr::filter(n < quantile(n, 0.999)) %>% 
+  # tirar palavras que aparecem pouco
+  dplyr::filter(n < quantile(n, 0.999)) %>%
   dplyr::top_n(n = 30) %>% 
   ggplot(aes(reorder(word, n), n)) +
   geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
@@ -459,12 +509,11 @@ unnested %>%
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
   labs(x = 'Top 30 palavras mais comuns', y = 'Contagem') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 
 ---
-# 1-grams 
 
 ```{r, fig.width=5.5, fig.height=6, echo = FALSE, eval = TRUE}
 unnested %>% 
@@ -478,7 +527,7 @@ unnested %>%
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
   labs(x = 'Top 30 palavras mais comuns', y = 'Contagem') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -516,8 +565,8 @@ all_data %>%
                  colour = 'darksalmon') + 
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
-  labs(x = 'Top 30 most common 2-grams', y = 'Counts') +
-  theme_bw()
+  labs(x = 'Top 30 2-grams mais comuns', y = 'Counts') +
+  theme_bw(14)
 ```
 
 
@@ -543,7 +592,7 @@ all_data %>%
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
   labs(x = 'Top 30 2-grams mais comuns', y = 'Contagem') +
-  theme_bw()
+  theme_bw(14)
 
 
 ```
@@ -588,13 +637,13 @@ add_sentiments %>%
   coord_flip() +
     labs(x = 'Top 15 palavras mais comuns', 
        y = 'Contagens', title = "Sentimentos") +
-  theme_bw()
+  theme_bw(14)
 ```
 
 
 ---
 
-```{r, echo = FALSE, eval = TRUE}
+```{r, echo = FALSE, eval = TRUE, fig.width=8}
 add_sentiments %>% 
   group_by(polarity) %>% 
   count(word) %>% 
@@ -609,7 +658,7 @@ add_sentiments %>%
   coord_flip() +
   labs(x = 'Top 15 palavras mais comuns', 
        y = 'Contagens', title = "Sentimentos") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -636,11 +685,8 @@ summ %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = 'Músicas', y = 'Polaridades') +
-  theme_bw()
+  theme_bw(14)
 ```
-
----
-
 
 --- 
 
@@ -662,7 +708,7 @@ summ %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = 'Músicas', y = 'Polaridades') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 
@@ -673,10 +719,6 @@ summ %>%
 Pacotes extra:
   - `ggridges`
   - `chorddiag`
-
----
-
-# Parte 2. Acordes
 
 ```{r}
 # Removendo enarmonias
@@ -691,7 +733,13 @@ chords <- all_data %>%
     chord == "E#" ~ "F",
     chord == "B#" ~ "C",
     TRUE ~ chord)) 
+```
 
+---
+
+# Parte 2. Acordes
+
+```{r}
 # Top 20 músicas com uma maior quantidade de acordes
 chords %>% 
   dplyr::group_by(song, chord) %>% 
@@ -704,9 +752,7 @@ chords %>%
            size = 0.5, alpha = 0.6, stat = "identity") +
   labs(x = 'Músicas', y = 'Contagem de Acordes Distintos') +
   coord_flip() +
-  theme_bw()
-
-
+  theme_bw(14)
 ```
 
 ---
@@ -737,7 +783,7 @@ chords %>%
            size = 0.5, alpha = 0.6, stat = "identity") +
   labs(x = 'Músicas', y = 'Contagem de Acordes Distintos') +
   coord_flip() +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -763,7 +809,7 @@ dt <- feat_chords %>%
 # Extraindo variáveis dos acordes
 
 ```{r, eval = TRUE}
-glimpse(feat_chords)
+dplyr::glimpse(feat_chords)
 ```
 
 ---
@@ -785,8 +831,8 @@ dt %>%
   scale_fill_cyclical(values = c("dodgerblue4", "darksalmon")) +
   guides(fill = FALSE) +
   xlim(0, 1) +
-  labs(x = "Densities", y = "Extracted variables") +
-  theme_bw()
+  labs(x = "Densidades", y = "Variáveis extraídas") +
+  theme_bw(14)
 
 ```
 
@@ -810,7 +856,7 @@ dt %>%
   guides(fill = FALSE) +
   xlim(0, 1) +
   labs(x = "Densities", y = "Extracted variables") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -840,9 +886,22 @@ chorddiag::chorddiag(mm, showTicks = FALSE,
 
 ---
 
+# Expressões regulares (regex)
+
+- Mini-linguagem usada para representar textos
+- Para quem trabalha com texto, é indispensável saber regex
+- Regex são usadas dentro do pacote `stringr`
+- Para se aprofundar em regex:
+    - [Slides sobre regex](https://ctlente.com/pt/teaching/stringr-lubridate/)
+    - [Material online](https://www.curso-r.com/material/stringr/)
+    - [Cheat Sheet](https://github.com/rstudio/cheatsheets/raw/master/strings.pdf)
+    
+
+---
+
 # Diagramas de cordas
 
-```{r, eval = TRUE, echo = FALSE, fig.align="center"}
+```{r, eval = TRUE, echo = FALSE, fig.align="center", out.width="100%"}
 # Contando as transições entre os acordes
 comp <- chords %>% 
   dplyr::mutate(
@@ -880,7 +939,7 @@ spot %>%
                fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -898,7 +957,7 @@ spot %>%
                fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -918,7 +977,7 @@ spot %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = 'Músicas', y = 'Popularidade') +
-  theme_bw()
+  theme_bw(14)
 ```
 
 ---
@@ -937,7 +996,7 @@ spot %>%
   facet_wrap(~situation, scales = "free") +
   coord_flip() +
   labs(x = "Dançabilidade", y = "Variáveis") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -960,7 +1019,7 @@ ggplot(aes(danceability, vars)) +
   geom_smooth(method  = "lm", colour = "dodgerblue4") +
   labs(x = "Dançabilidade", y = "Variáveis") +
   facet_wrap(~group, scales = "free") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -976,12 +1035,12 @@ dt <- spot %>%
 dt$danceability <- spot$danceability
 
 dt %>% 
-ggplot(aes(danceability, vars)) +
+  ggplot(aes(danceability, vars)) +
   geom_point(colour = "darksalmon") +  
   geom_smooth(method  = "lm", colour = "dodgerblue4") +
   labs(x = "Dançabilidade", y = "Variáveis") +
   facet_wrap(~group, scales = "free") +
-  theme_bw()
+  theme_bw(14)
 
 ```
 
@@ -1020,6 +1079,7 @@ spot %>%
 
 ```{r, eval = TRUE}
 # Unindo as bases anteriores e arrumando
+set.seed(1)
 model_data <- feat_chords %>% 
   right_join(spot, by = c("song" = "song")) %>% 
   right_join(summ, by = c("song" = "song")) %>% 
@@ -1029,7 +1089,7 @@ model_data <- feat_chords %>%
          -popul) %>% 
   mutate(pop_class = as.factor(pop_class)) %>% 
   # Separando em treino e teste
-  mutate(part = ifelse(runif(nrow(.)) > 0.25, "treino", "teste"))
+  mutate(part = ifelse(runif(n()) > 0.25, "treino", "teste"))
 
 model_data %>% 
   janitor::tabyl(part)
@@ -1073,10 +1133,8 @@ imp0 %>%
   ggplot(aes(var, value)) +
   geom_point(size = 3.5, colour = "darksalmon") +
   coord_flip() +
-  labs(
-       x = "Variáveis", y = "Diminuição no critério de Gini") +
-  theme_bw()
-
+  labs(x = "Variáveis", y = "Diminuição no critério de Gini") +
+  theme_bw(14)
 ```
 
 ---
@@ -1092,9 +1150,8 @@ imp0 %>%
   ggplot(aes(var, value)) +
   geom_point(size = 3.5, colour = "darksalmon") +
   coord_flip() +
-  labs(
-       x = "Variáveis", y = "Diminuição no critério de Gini") +
-  theme_bw()
+  labs(x = "Variáveis", y = "Diminuição no critério de Gini") +
+  theme_bw(14)
 
 ```
 
@@ -1111,9 +1168,9 @@ mean(m0$err.rate[,1])
 **Como melhorar o modelo?**
 
 ```{r}
-corrplot::corrplot(cor(train %>% select_if(is.numeric), method = "spearman"))
+corrplot::corrplot(cor(train %>% select_if(is.numeric), 
+                       method = "spearman"))
 ```
-
 
 ---
 
