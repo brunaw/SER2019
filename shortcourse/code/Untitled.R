@@ -586,11 +586,11 @@ sel_var <- imp0 %>%
   slice(1:15) %>% 
   pull(var)
 
-form <- paste("pop_class ~ ", paste(sel_var,
+form <- paste("pop_class ~ ", paste(sel_var[1:10],
                                     collapse = " + ")) %>%
      as.formula()
 
-m1 <- randomForest(form, data = train, mtry = 2, ntrees = 500)
+m1 <- randomForest(form, data = train, mtry = 5, ntrees = 500)
 
 m1
 

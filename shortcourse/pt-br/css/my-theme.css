@@ -21,7 +21,7 @@ font-size: larger;
 
 
 
-.onfire { color: #4A274F; }
+.onfire { color: #F0A07C; }
 
 /* link color */
 a, a > code {
@@ -45,11 +45,11 @@ a:hover {
 
 /* selected link */
 a:active {
-    color: #ee5863;
+    color: #2F3C7E;
 }
 
 .remark-code {
-  color: #4A274F;
+  color: #2F3C7E;
 }
 
 .remark-inline-code { 

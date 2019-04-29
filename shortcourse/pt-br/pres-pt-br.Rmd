@@ -5,7 +5,7 @@ author: Bruna Wundervald & Julio Trecenti
 date: Maio, 2019
 output:
   xaringan::moon_reader:
-    css: ["default", "css/my-theme.css", "css/my-fonts.css"]
+    css: ["css/code.css", "css/my-theme.css", "css/my-fonts.css"]
     lib_dir: libs
     nature:
       highlightStyle: github
@@ -314,7 +314,7 @@ nrow(chords) - nrow(all_data)
 - Uma forma de resolver automaticamente é calculando as similaridades entre os nomes.
 - Uma forma de medir a distância entre os nomes é verificando se um nome é igual ao outro a menos de uma, duas ou três letras. Por exemplo:
 
-```{r}
+```{r, eval = TRUE}
 nome1 <- "Geni e o Zepelim"
 nome2 <- "Geni e o Zepelin"
 # Calcula a distância
@@ -371,11 +371,11 @@ results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
 
 **Exemplos de casos muito similares encontrados:**
 
-*a bela a fera*  e *a bela e a fera*, 
+*a bela a fera*  **e** *a bela e a fera*, 
 
-*logo eu* e *logo eu?*, 
+*logo eu* **e** *logo eu?*, 
 
-*não fala de maria* e *não fala de maria*,
+*não fala de maria* **e** *não fala de maria*,
 
 ... 
 
@@ -454,16 +454,19 @@ all_data <- read.table("all_data.txt", stringsAsFactors = FALSE)
 
 Pega as palavras e seus passados.
 
-```{r}
+```{r, eval = TRUE}
 nome1 <- "Geni e o Zepelim"
 tokenizers::tokenize_ngrams(nome1, n = 1)
 tokenizers::tokenize_ngrams(nome1, n = 2)
 tokenizers::tokenize_ngrams(nome1, n = 3)
 ```
 
+---
+
+# n-grams
+
 - útil para guardar expressões mais complexas.
 - a função `unnest_tokens()` é separa e empilha os n-gramas de cada letra.
-
 
 ```{r, eval = TRUE}
 library(tidytext)
@@ -642,8 +645,9 @@ add_sentiments %>%
 
 
 ---
+class:  center
 
-```{r, echo = FALSE, eval = TRUE, fig.width=8}
+```{r, echo = FALSE, eval = TRUE}
 add_sentiments %>% 
   group_by(polarity) %>% 
   count(word) %>% 
@@ -687,6 +691,8 @@ summ %>%
   labs(x = 'Músicas', y = 'Polaridades') +
   theme_bw(14)
 ```
+
+---
 
 --- 
 
@@ -790,6 +796,29 @@ chords %>%
 ---
 # Extraindo variáveis dos acordes
 
+- Os acordes são, no fundo, um pedaço de texto. 
+- Textos no estado "cru" não são muito informativos. 
+
+Vamos usar a função `feature_extraction()` para extrair
+covariáveis relacionadas aos acordes que tenham 
+uma interpretação clara: 
+
+- Acordes menores
+- Acordes diminutos
+- Acordes aumentados
+- Sus 
+- Com a sétima nota
+- Com a sétima nota maior
+- Com a sexta nota
+- Com a quarta nota
+- Com a quinta nota aumentada
+- Com a quinta nota diminuta
+- Com a nona nota
+- Com baixo variante  
+
+---
+# Extraindo variáveis dos acordes
+
 ```{r, eval = TRUE}
 feat_chords <- all_data %>%
   select(chord, song) %>% 
@@ -813,18 +842,20 @@ dplyr::glimpse(feat_chords)
 ```
 
 ---
+# Visualizando
 
 ```{r}
 library(ggridges)
 
 dt$group <- forcats::lvls_revalue(
   dt$group,
-  c("Augmented", "Bass", "Diminished", 
-    "Aug. Fifth", "Dim. Fifth", 
-    "Fourth", "Minor", "Ninth", "Seventh",
-    "Major Seventh", "Sixth"))
+  c("Aumentado", "Baixo", "Diminuto", 
+    "Quinta Aum.", "Quinta Dim.", 
+    "Quarta", "Menor", "Nona", "Sétima",
+    "Sétima Maior", "Sexta"))
 
-# Plotting densities of the extracted features
+# Plotando as densidades das variáveis extraídas
+
 dt %>% 
   ggplot(aes(vars, group, fill = group)) +
   geom_density_ridges(alpha = 0.6) +
@@ -843,19 +874,19 @@ library(ggridges)
 
 dt$group <- forcats::lvls_revalue(
   dt$group,
-  c("Augmented", "Bass", "Diminished", 
-    "Aug. Fifth", "Dim. Fifth", 
-    "Fourth", "Minor", "Ninth", "Seventh",
-    "Major Seventh", "Sixth"))
+  c("Aumentado", "Baixo", "Diminuto", 
+    "Quinta Aum.", "Quinta Dim.", 
+    "Quarta", "Menor", "Nona", "Sétima",
+    "Sétima Maior", "Sexta"))
 
-# Plotting densities of the extracted features
+# Plotando as densidades das variáveis extraídas
 dt %>% 
   ggplot(aes(vars, group, fill = group)) +
   geom_density_ridges(alpha = 0.6) +
   scale_fill_cyclical(values = c("dodgerblue4", "darksalmon")) +
   guides(fill = FALSE) +
   xlim(0, 1) +
-  labs(x = "Densities", y = "Extracted variables") +
+  labs(x = "Densidades",  y = "Variáveis extraídas") +
   theme_bw(14)
 
 ```
@@ -864,7 +895,12 @@ dt %>%
 
 # Diagramas de cordas
 
+As transições entre os acordes são um elemento importante da 
+estrutura harmônica de músicas. Vamos avaliar como estas transições
+se dão neste caso.
+
 ```{r}
+# devtools::install_github("mattflor/chorddiag")
 # Contando as transições entre os acordes
 comp <- chords %>% 
   dplyr::mutate(
@@ -935,8 +971,7 @@ spot <- all_data %>%
 # Densidade da popularidade das músicas
 spot %>% 
   ggplot(aes(popul)) +
-  geom_density(colour = 'dodgerblue4',
-               fill = "darksalmon", 
+  geom_density(colour = 'dodgerblue4', fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
   theme_bw(14)
@@ -1024,8 +1059,9 @@ ggplot(aes(danceability, vars)) +
 ```
 
 ---
+class: center
 
-```{r, eval = TRUE, echo = FALSE}
+```{r, eval = TRUE, echo = FALSE, fig.width=8, fig.height=7}
 dt <- spot %>% 
   select(energy,  
           loudness, speechiness, liveness, duration_ms, 
