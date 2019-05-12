@@ -1,0 +1,1330 @@
+---
+title: "Music Data Analysis in `R`"
+subtitle: "IV Internacional Seminar on Statistics with `R`"
+author: Bruna Wundervald & Julio Trecenti
+date: May, 2019
+output:
+  xaringan::moon_reader:
+    css: ["css/code.css", "css/my-theme.css", "css/my-fonts.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "https://platform.twitter.com/widgets.js"
+    includes:
+      in_header: header.html  
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = 'center',
+                      warning = FALSE, message = FALSE, 
+                      eval = FALSE, cache = TRUE)
+library(tidyverse)
+```
+
+class: middle
+
+This presentation can be found at:  http://brunaw.com/shortcourses/IXSER/en/pres-en.html
+
+**GitHub**:
+https://github.com/brunaw/SER2019
+
+---
+
+# Who are we
+
+.pull-left[
+```{r, echo = FALSE, out.width="70%", eval = TRUE}
+knitr::include_graphics("img/bruna.jpg")
+```
+] .pull-right[
+**Bruna Wundervald**
+- Ph.D. Candidate in Statistics at Maynooth University.
+- Twitter: @bwundervald
+- GitHub: @brunaw
+]
+
+---
+# Quem somos
+
+.pull-left[
+```{r, echo = FALSE, out.width="70%", eval = TRUE}
+knitr::include_graphics("img/jubs.png")
+```
+].pull-right[
+  **Julio Trecenti**
+  - Ph.D. Candidate in Statistics at IME-USP
+  - Partner at Curso-R
+  - Twitter: @jtrecenti
+  - GitHub: @jtrecenti
+
+  ]
+
+---
+# Goals
+
+  - Learn how to use the packages:
+    - `vagalumeR`: lyrics extraction
+    - `chorrrds`: chords extraction
+    - `Rspotify`: extract variables from the [Spotify API](https://developer.spotify.com/documentation/web-api/)
+    
+  - Understand how APIs work in general;
+  - Combine data from different sources;
+  - Understand and summarise data in various formats: 
+    - Text,
+    - Continuous variables,
+    - Sequences
+  - Create a prediction model with the final data. 
+
+**Not included:** audio analysis. 
+
+---
+# Requisites & resources
+
+   - `R` beginner/intermediate
+   - `tidyverse`
+   - `%>%` (pipe) is essential! 
+    
+[**R-Music Blog**](https://r-music.rbind.io/) <img src="https://raw.githubusercontent.com/r-music/site/master/img/logo.png" style="float:left;margin-right:20px;" width=120>
+
+<h4 style="padding:0px;margin:10px;">
+R for music data extraction & analysis 
+</h4>
+
+---
+
+# Don't get lost!
+
+- If you are ever stuck in any part of this course, don't hesitate in asking
+us
+
+- Have the RStudio Cheatsheets at hand at all moments:
+
+https://www.rstudio.com/resources/cheatsheets/
+
+- If you need material in Portuguese, check the Curso-R website:
+
+https://curso-r.com/material/
+
+---
+
+# Loading packages
+
+Main packages: 
+```{r, eval = FALSE}
+library(vagalumeR)
+library(Rspotify)
+library(chorrrds)
+library(tidyverse)
+```
+
+---
+
+class: bottom, center, inverse
+
+# Data extraction
+## `vagalumeR`: music lyrics
+## `RSpotify`: Spotify variables
+## `chorrrds`: music chords
+
+---
+
+# Data extraction
+
+- For each package, there are a few steps to be followed. 
+
+- The steps involve, basically, 
+  1. obtain the IDs of the objects for which we want to extract information (like artists, albums, songs), and 
+  2. use those IDs inside specific functions; 
+
+---
+# Connecting to the APIs
+## `vagalumeR`
+
+Steps:
+  1. Go to [`https://auth.vagalume.com.br/`](https://auth.vagalume.com.br/) and log in,
+  2. Go to [`https://auth.vagalume.com.br/settings/api/`](https://auth.vagalume.com.br/settings/api/) and create a new app,
+  3. Go to [`https://auth.vagalume.com.br/settings/api/`](https://auth.vagalume.com.br/settings/api/) again and copy the app's credential,  . 
+  4. Save that credential in an object, like:
+  
+```{r, eval = FALSE}
+key_vagalume <- "my-credential"
+```
+
+---
+# Connecting to the APIs
+## `Rspotify`
+
+Steps:
+  1. Go to [`https://developer.spotify.com/`](https://developer.spotify.com/) and log in, 
+  2. Go to [`https://developer.spotify.com/dashboard/`](https://developer.spotify.com/dashboard/) and create a new app,
+  3. Save the **client ID** and the **client Secret** generated, 
+  4. Define the redirect URL as `http://localhost:1410/`, 
+  5. Use the `spotifyOAuth()` to authenticate:
+  
+```{r, eval = FALSE}
+library(Rspotify)
+key_spotify <- spotifyOAuth("app_id","client_id","client_secret")
+```
+  
+> The keys will be used later to create the connection between 
+`R` and the data extraction functions. 
+
+---
+
+## `vagalumeR`
+
+```{r, eval = FALSE}
+# 1. Defining the artists
+artist <- "chico-buarque"
+
+# 2. Look for the names and IDs of the songs 
+songs <- artist %>% 
+  purrr::map_dfr(songNames)
+
+# 3. Map the lyrics functions in the IDs found 
+lyrics <-  songs %>% 
+  dplyr::pull(song.id) %>% 
+  purrr::map(lyrics, 
+             artist = artist,
+             type = "id", 
+             key = key_vagalume) %>%
+  purrr::map_dfr(data.frame) %>% 
+  dplyr::select(-song) %>% 
+  dplyr::right_join(songs %>% 
+                      dplyr::select(song, song.id), by = "song.id")
+```
+
+---
+
+## `RSpotify` - variables
+
+
+- “danceability” = describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity.
+- “energy” = a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity.
+- “key_spotify” = estimated overall key of the track. Integers map to pitches using standard Pitch Class notation . E.g. 0 = C, 1 = C#/Db 2 = D, and so on.
+- “loudness” = overall loudness of a track in decibels (dB).
+- “mode” = indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived.
+- “speechiness” = detects the presence of spoken words in a track.
+- “acousticness” = a measure from 0.0 to 1.0 of whether the track is acoustic.
+- “instrumentalness” = whether a track contains no vocals.
+- “liveness” = detects the presence of an audience in the recording.
+- “valence” = measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track.
+- “tempo” = overall estimated tempo of a track in beats per minute (BPM).
+- “duration_ms” = duration of the track in milliseconds.
+- “time_signature” = the duration of the track in milliseconds.
+- "popularity" = the popularity of the song 
+
+---
+
+## `RSpotify`
+
+```{r, eval = FALSE}
+# 1. Search the artist using the API
+find_artist <- searchArtist("chico buarque", token = key_spotify)
+
+# 2. Use the ID to search for album information
+albums <- getAlbums(find_artist$id[1], token = key_spotify)
+
+# 3. Obtain the songs of each album 
+albums_res <- albums %>% 
+  dplyr::pull(id) %>% 
+  purrr::map_df(
+    ~{
+      getAlbum(.x, token = key_spotify) %>% 
+        dplyr::select(id, name) 
+    }) %>% 
+  tidyr::unnest()
+
+ids <- albums_res %>% 
+  dplyr::pull(id)
+
+# 4. Obtain the variables for each song 
+features <- ids %>% 
+  purrr::map_dfr(~getFeatures(.x, token = key_spotify)) %>% 
+  dplyr::left_join(albums_res, by = "id")
+```
+
+---
+
+**Until this moment, the package does not have a simple solution to extract the popularity of the songs. How do we solve this issue? **
+
+```{r, eval = FALSE}
+# 5. Create a simple function to get the popularity
+getPop <- function(id, token){
+  u <- paste0("https://api.spotify.com/v1/tracks/", id)
+  req <- httr::GET(u, httr::config(token = token))
+  json1 <- httr::content(req)
+  res <- data.frame(song = json1$name, 
+                    popul = json1$popularity, 
+                    id = json1$id)
+  return(res)
+}
+
+# 6. Map this function in the IDs found
+popul <-  features %>% 
+  dplyr::pull(id) %>% 
+  purrr::map_dfr(~getPop(.x, token = key_spotify)) 
+
+# 7. Join the popularity with the other variables
+features <- features %>% 
+  dplyr::right_join(
+    popul %>% dplyr::select(-song), 
+    by = c("id" = "id"))
+```
+
+---
+# Details about the APIs
+
+- **APIs can be very unstable. This means that, sometimes, even without reaching the access limit, they will fail.**
+
+How do we solve that?
+
+  - Dividing the whole process into smaller batches
+  - Using small time intervals between each access to the API, with 
+  `Sys.sleep()` for example 
+  
+---
+
+# `chorrrds`
+
+```{r, eval = FALSE}
+# 1. Searching the songs
+songs <- "chico-buarque" %>% 
+  chorrrds::get_songs() 
+
+# 2. Mapping the chord extraction in the songs found
+chords <- songs %>% 
+  dplyr::pull(url) %>%                     
+  purrr::map(chorrrds::get_chords) %>%    
+  purrr::map_dfr(dplyr::mutate_if, is.factor, as.character) %>% 
+  chorrrds::clean(message = FALSE) 
+```
+
+
+---
+
+# Combining different datasets 
+
+```{r, eval = FALSE}
+# Standardise the name of the key column and use it inside the joins
+
+chords <- chords %>% 
+  dplyr::mutate(song = stringr::str_remove(music, "chico buarque ")) %>% 
+  dplyr::select(-music)
+
+lyrics <- lyrics %>% 
+  dplyr::mutate(song = stringr::str_to_lower(song))
+
+features <- features %>% 
+  dplyr::mutate(song = stringr::str_to_lower(name)) %>% 
+  dplyr::select(-name)
+
+all_data <- chords %>% 
+  dplyr::inner_join(lyrics, by = "song") %>% 
+  dplyr::inner_join(features, by = "song")
+```
+
+---
+**What if there a lot of unmatches?**
+
+```{r, eval = FALSE}
+nrow(chords) - nrow(all_data) 
+#> 8973
+```
+
+--
+
+- Solving those cases manually can take a lot of time. 
+- One simple way is to use string similarity to find similar titles
+between the songs.
+- We can do that by calculating the distances between the titles and 
+verifying how many "letters of difference" they have. For example:
+
+```{r, eval = TRUE}
+nome1 <- "Geni e o Zepelim"
+nome2 <- "Geni e o Zepelin"
+# Finding the distance
+RecordLinkage::levenshteinDist(nome1, nome2)
+# Finding the similarity = 1 -  dist / str_length(biggest string)
+RecordLinkage::levenshteinSim(nome1, nome2)
+```
+
+- When the titles are different, we should take the most similar ones and merge. 
+- Usually, there's no clear cut point for the similarity, so we define it 
+arbitrarly. 
+
+---
+
+# Fixing the titles
+
+```{r, eval = FALSE}
+# Let's find the string distances between the titles and use this
+# information to fix them in the dataset
+
+# 1. Which ones are in the chords data but not in the lyrics one?
+anti_chords_lyrics <- chords %>% 
+  dplyr::anti_join(lyrics, by = "song") 
+
+# 2. Saving the titles to fix
+names_to_fix <- anti_chords_lyrics %>% 
+  dplyr::distinct(song) %>% 
+  dplyr::pull(song)
+
+# 3. Calculating the distances between the titles of the 
+# lyrics dataset and the unmatched ones from the chords dataset 
+dists <- lyrics$song %>% 
+  purrr::map(RecordLinkage::levenshteinSim, str1 = names_to_fix)
+```
+
+---
+
+```{r, eval = FALSE}
+# 4. Retrieving the most similar titles in the two datasets
+ordered_dists <- dists %>% purrr::map_dbl(max)
+max_dists <- dists %>% purrr::map_dbl(which.max)
+
+# 5. Filtering the one that have similarity > 0.70
+indexes_min_dist <- which(ordered_dists > 0.70)
+songs_min_dist <- lyrics$song[indexes_min_dist]
+index_lyrics <- max_dists[which(ordered_dists > 0.70)]
+
+# 6. Saving the similar ones in a data.frame
+results_dist_lyrics <- data.frame(from_chords = names_to_fix[index_lyrics],
+                                  from_lyrics = songs_min_dist)
+
+```
+
+**Examples of similar cases found:**
+
+*a bela a fera*  **and** *a bela e a fera*, 
+
+*logo eu* **and** *logo eu?*, 
+
+*não fala de maria* **and** *não fala de maria *,
+
+... 
+
+--
+
+Now we have fewer problems! Let's fix them manually.
+
+---
+
+## Fixing manually 
+
+```{r, eval = FALSE}
+chords <- chords %>% 
+  dplyr::mutate(
+    song = 
+      dplyr::case_when( 
+        song == 'a bela a fera' ~ 'a bela e a fera',  
+        song == 'a historia de lily braun' ~ 'a história de lily braun',  
+        song == 'a moca do sonho' ~ 'a moça do sonho',  
+        song == 'a ostra o vento' ~ 'a ostra e o vento',  
+        song == 'a televisao' ~ 'a televisão',  
+        song == 'a valsa dos clows' ~ 'a valsa dos clowns',  
+        song == 'a voz do dono o dono da voz' ~ 'a voz do dono e o dono da voz',  
+        song == 'agora falando serio' ~ 'agora falando sério',  
+        TRUE ~ song))
+
+```
+
+--
+
+Tip: the previous sintaxe can be easily created with: 
+
+```{r, eval = FALSE}
+cat(
+  paste0("song == ", "'", results_dist_lyrics$from_chords, "' ~ '", 
+         results_dist_lyrics$from_lyrics, "', "), collapse = "")
+
+```
+
+> Link for the data: https://github.com/brunaw/SER2019/tree/master/shortcourse/data/all_data.txt
+---
+
+# Redoing the `joins`
+
+```{r}
+all_data <- chords %>% 
+  dplyr::inner_join(lyrics, by = "song") %>% 
+  dplyr::inner_join(features, by = "song")
+
+# Finally saving the complete data! 
+write.table(all_data, "all_data.txt")
+```
+
+---
+
+class: bottom, center, inverse
+
+# Exploratory Analysis
+
+---
+
+# Part 1: lyrics
+
+Extra packages:
+  - `tm`: text analysis in general
+  - `tidytext`: `tidy` text analysis
+  - `lexiconPT`: sentiment dictionary for portuguese
+
+  
+```{r, echo = FALSE, eval = TRUE}
+all_data <- read.table("shortcourse/data/all_data.txt", 
+                       stringsAsFactors = FALSE)
+```
+
+---
+
+# n-grams
+
+**n-grams**: the words and its "past"
+
+- Useful to analyze more complex expressions, keep more complex 
+expressions or sequences
+
+
+```{r, eval = TRUE}
+nome1 <- "Geni e o Zepelim"
+tokenizers::tokenize_ngrams(nome1, n = 1)
+tokenizers::tokenize_ngrams(nome1, n = 2)
+tokenizers::tokenize_ngrams(nome1, n = 3)
+```
+
+---
+
+# n-grams
+
+- the `unnest_tokens()` separates the n-grams of each lyric. 
+
+```{r, eval = TRUE}
+library(tidytext)
+library(wordcloud)
+
+# List of portuguese stopwords: 
+stopwords_pt <- data.frame(word = tm::stopwords("portuguese"))
+
+# Breaking the phrases into single words with 1-gram
+unnested <- all_data %>% 
+  select(text) %>% 
+  unnest_tokens(word, text, token = "ngrams", n = 1) %>% 
+  # Removing stopwords
+  dplyr::anti_join(stopwords_pt, by = c("word" = "word"))
+```
+
+*stopwords*: very frequent words of a language, which might not be essential for the overall meaning of a sentence
+
+
+---
+
+# Part 1: lyrics
+
+Counting each word that appeared in the songs:
+```{r, eval = TRUE}
+unnested %>% 
+  dplyr::count(word) %>% 
+  arrange(desc(n)) %>% 
+  slice(1:10)
+```
+
+---
+
+# 1-grams 
+
+```{r, eval = FALSE}
+unnested %>% 
+  dplyr::count(word) %>% 
+  # removing words that barely appeared
+  dplyr::filter(n < quantile(n, 0.999)) %>%
+  dplyr::top_n(n = 30) %>% 
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  coord_flip() +
+  labs(x = 'Top 30 most common words', y = 'Count') +
+  theme_bw(14)
+```
+
+---
+
+```{r, fig.width=6.5, fig.height=7, echo = FALSE, eval = TRUE}
+unnested %>% 
+  dplyr::count(word) %>% 
+  dplyr::filter(n < quantile(n, 0.999)) %>% 
+  dplyr::top_n(n = 30) %>% 
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  coord_flip() +
+  labs(x = 'Top 30 most common words', y = 'Count') +
+  theme_bw(18)
+```
+
+---
+# In a  `wordcloud` format
+
+```{r, eval = TRUE, fig.width=5, fig.height=5, fig.align="center"}
+unnested %>% 
+  count(word) %>% 
+  with(wordcloud(word, n, family = "serif", 
+                 random.order = FALSE, max.words = 30, 
+                 colors = c("darksalmon", "dodgerblue4")))
+```
+
+
+---
+
+# 2-grams 
+
+```{r, eval = FALSE}
+all_data %>% 
+  select(text) %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>%
+  separate(bigram, c("word1", "word2"), sep = " ") %>%
+  filter(!word1 %in% stopwords_pt$word, 
+         !is.na(word1), !is.na(word2),
+         !word2 %in% stopwords_pt$word) %>%
+  count(word1, word2, sort = TRUE) %>% 
+  mutate(word = paste(word1, word2)) %>% 
+  filter(n < quantile(n, 0.999)) %>% 
+  arrange(desc(n)) %>% 
+  slice(1:30) %>%  
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  coord_flip() +
+  labs(x = 'Top 30 most common 2-grams', y = 'Count') +
+  theme_bw(18)
+```
+
+
+---
+
+```{r, eval = TRUE, echo = FALSE}
+all_data %>% 
+  select(text) %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>%
+  separate(bigram, c("word1", "word2"), sep = " ") %>%
+  filter(!word1 %in% stopwords_pt$word, 
+         !is.na(word1), !is.na(word2),
+         !word2 %in% stopwords_pt$word) %>%
+  count(word1, word2, sort = TRUE) %>% 
+  mutate(word = paste(word1, word2)) %>% 
+  filter(n < quantile(n, 0.999)) %>% 
+  arrange(desc(n)) %>% 
+  slice(1:30) %>%  
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  coord_flip() +
+  labs(x = 'Top 30 most common 2-grams', y = 'Count') +
+  theme_bw(14)
+
+```
+
+---
+
+# Sentiment analysis
+
+```{r, eval = TRUE}
+# devtools::install_github("sillasgonzaga/lexiconPT")
+
+# Retrieving the sentiments of portuguese words from the lexiconPT package
+sentiments_pt <- lexiconPT::oplexicon_v2.1 %>% 
+  mutate(word = term) %>% 
+  select(word, polarity)  
+
+# Joining the sentiments with the words from the songs
+add_sentiments <- all_data %>% 
+  select(text, song) %>% 
+  group_by_all() %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  unnest_tokens(word, text) %>% 
+  dplyr::anti_join(stopwords_pt, by = c("word" = "word")) %>% 
+  dplyr::inner_join(sentiments_pt, by = c("word" = "word")) 
+```
+
+---
+
+```{r}
+add_sentiments %>% 
+  group_by(polarity) %>% 
+  count(word) %>% 
+  filter(n < quantile(n, 0.999)) %>% 
+  top_n(n = 15) %>% 
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  facet_wrap(~polarity, scales = "free") +
+  coord_flip() +
+  labs(x = 'Top 15 most common words', y = 'Counts', title = 'Sentiments') +
+  theme_bw(14)
+```
+
+---
+class:  center
+
+```{r, echo = FALSE, eval = TRUE, fig.width=8, fig.height=6}
+add_sentiments %>% 
+  group_by(polarity) %>% 
+  count(word) %>% 
+  filter(n < quantile(n, 0.999)) %>% 
+  top_n(n = 15) %>% 
+  ggplot(aes(reorder(word, n), n)) +
+  geom_linerange(aes(ymin = min(n), ymax = n, x = reorder(word, n)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  facet_wrap(~polarity, scales = "free") +
+  coord_flip() +
+  labs(x = 'Top 15 most common words', y = 'Counts', title = 'Sentiments') +
+  theme_bw(14)
+
+```
+
+---
+
+# Which are the mos positive and more negative songs?
+
+```{r}
+summ <- add_sentiments %>% 
+  group_by(song) %>% 
+  summarise(mean_pol = mean(polarity)) 
+
+# 15 most positive and most negative songs
+summ %>% 
+  arrange(desc(mean_pol)) %>% 
+  slice(c(1:15, 121:135)) %>% 
+  mutate(situation = rep(c('+positive', '+negative'), each = 15)) %>% 
+  ggplot(aes(reorder(song, mean_pol), mean_pol)) +
+  geom_linerange(aes(ymin = min(mean_pol), ymax = mean_pol, 
+                     x = reorder(song, mean_pol)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  facet_wrap(~situation, scales = "free") +
+  coord_flip() +
+  labs(x = 'Songs', y = 'Polarities') +
+  theme_bw(14)
+```
+
+---
+
+--- 
+
+```{r, eval = TRUE, echo = FALSE,fig.width=8, fig.height=6}
+summ <- add_sentiments %>% 
+  group_by(song) %>% 
+  summarise(mean_pol = mean(polarity)) 
+
+summ %>% 
+  arrange(desc(mean_pol)) %>% 
+  slice(c(1:15, 121:135)) %>% 
+  mutate(situation = rep(c('+positive', '+negative'), each = 15)) %>% 
+  ggplot(aes(reorder(song, mean_pol), mean_pol)) +
+  geom_linerange(aes(ymin = min(mean_pol), ymax = mean_pol, 
+                     x = reorder(song, mean_pol)),
+                 position = position_dodge(width = 0.2), size = 1, 
+                 colour = 'darksalmon') + 
+  geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
+  facet_wrap(~situation, scales = "free") +
+  coord_flip() +
+  labs(x = 'Songs', y = 'Polarities') +
+  theme_bw(14)
+```
+
+---
+class: middle
+
+## What do we know so far?
+
+  - The most common words and bi-grams
+  - The are more positive than negative words in the lyrics
+  - In which songs the most positive or negative feelings are
+
+---
+
+# Part 2. Chords
+
+Extra packages:
+  - `ggridges`: density plots 
+  - `chorddiag`: chords diagrams
+
+```{r}
+# Removing enarmonies
+chords <- all_data %>%
+  select(chord, song) %>% 
+  dplyr::mutate(chord = case_when( 
+    chord == "Gb" ~ "F#",
+    chord == "C#" ~ "Db",          
+    chord == "G#" ~ "Ab",
+    chord == "A#" ~ "Bb",
+    chord == "D#" ~ "Eb",
+    chord == "E#" ~ "F",
+    chord == "B#" ~ "C",
+    TRUE ~ chord)) 
+```
+
+---
+
+# Part 2. Chords
+
+```{r}
+# Top 20 songs with more distinct chords
+chords %>% 
+  dplyr::group_by(song, chord) %>% 
+  dplyr::summarise(distintos = n_distinct(chord)) %>% 
+  dplyr::summarise(cont = n()) %>% 
+  dplyr::mutate(song = fct_reorder(song, cont)) %>% 
+  top_n(n = 20) %>% 
+  ggplot(aes(y = cont, x = song)) +
+  geom_bar(colour = 'dodgerblue4', fill = 'darksalmon',
+           size = 0.5, alpha = 0.6, stat = "identity") +
+  labs(x = 'Songs', y = 'Counts') +
+  coord_flip() +
+  theme_bw(14)
+```
+
+---
+
+```{r, echo = FALSE, eval = TRUE}
+# Removing enarmonies
+chords <- all_data %>%
+  select(chord, song) %>% 
+  dplyr::mutate(chord = case_when( 
+    chord == "Gb" ~ "F#",
+    chord == "C#" ~ "Db",          
+    chord == "G#" ~ "Ab",
+    chord == "A#" ~ "Bb",
+    chord == "D#" ~ "Eb",
+    chord == "E#" ~ "F",
+    chord == "B#" ~ "C",
+    TRUE ~ chord)) 
+
+# Top 20 songs with more distinct chords
+chords %>% 
+  dplyr::group_by(song, chord) %>% 
+  dplyr::summarise(distintos = n_distinct(chord)) %>% 
+  dplyr::summarise(cont = n()) %>% 
+  dplyr::mutate(song = fct_reorder(song, cont)) %>% 
+  top_n(n = 20) %>% 
+  ggplot(aes(y = cont, x = song)) +
+  geom_bar(colour = 'dodgerblue4', fill = 'darksalmon',
+           size = 0.5, alpha = 0.6, stat = "identity") +
+  labs(x = 'Songs', y = 'Counts') +
+  coord_flip() +
+  theme_bw(14)
+
+```
+
+---
+# Extracting variables 
+
+- The chords data are, in fact, just pieces of text. 
+- Text in a raw state is not very informative. 
+
+Let's use the `feature_extraction()` function to extract 
+covariables related to the chords that have a clear interpretation: 
+
+ - minor 
+ - diminished
+ - augmented
+ - sus 
+ - chords with the 7th
+ - chords with the major 7th
+ - chords with the 6th
+ - chords with the 4th
+ - chords with the augmented 5th
+ - chords with the diminished 5th
+ - chords with the 9th
+ - chords with varying bass 
+ 
+ 
+---
+# Extracting variables 
+
+```{r, eval = TRUE}
+feat_chords <- all_data %>%
+  select(chord, song) %>% 
+  chorrrds::feature_extraction() %>% 
+  select(-chord) %>% 
+  group_by(song) %>% 
+  summarise_all(mean)
+
+dt <- feat_chords %>% 
+  tidyr::gather(group, vars, minor, seventh, 
+                seventh_M, sixth, fifth_dim, fifth_aug, 
+                fourth, ninth, bass, dimi, augm)
+```
+
+
+---
+# Extracting variables 
+
+```{r, eval = TRUE}
+dplyr::glimpse(feat_chords)
+```
+
+---
+# Visualizing it 
+
+```{r}
+library(ggridges)
+# Renaming current levels
+dt$group <- forcats::lvls_revalue(
+  dt$group,
+  c("Aumentado", "Baixo", "Diminuto", 
+    "Quinta Aum.", "Quinta Dim.", 
+    "Quarta", "Menor", "Nona", "Sétima",
+    "Sétima Maior", "Sexta"))
+
+# Plotting densities of the extracted features
+
+dt %>% 
+  ggplot(aes(vars, group, fill = group)) +
+  geom_density_ridges(alpha = 0.6) +
+  scale_fill_cyclical(values = c("dodgerblue4", "darksalmon")) +
+  guides(fill = FALSE) +
+  xlim(0, 1) +
+  labs(x = "Densidades", y = "Variáveis extraídas") +
+  theme_bw(14)
+
+```
+
+---
+
+```{r, eval = TRUE, echo = FALSE}
+library(ggridges)
+# Renaming current levels
+dt$group <- forcats::lvls_revalue(
+  dt$group,
+  c("Aumentado", "Baixo", "Diminuto", 
+    "Quinta Aum.", "Quinta Dim.", 
+    "Quarta", "Menor", "Nona", "Sétima",
+    "Sétima Maior", "Sexta"))
+
+# Plotting densities of the extracted features
+dt %>% 
+  ggplot(aes(vars, group, fill = group)) +
+  geom_density_ridges(alpha = 0.6) +
+  scale_fill_cyclical(values = c("dodgerblue4", "darksalmon")) +
+  guides(fill = FALSE) +
+  xlim(0, 1) +
+  labs(x = "Densidades",  y = "Variáveis extraídas") +
+  theme_bw(14)
+
+```
+
+---
+
+# Chord diagrams using the chords
+
+The chords transitions are an important element of the harmonic structure
+of songs. Let's check how those transitions are happening in this case. 
+
+```{r}
+# devtools::install_github("mattflor/chorddiag")
+
+# Counting the transitions between the chords
+comp <- chords %>% 
+  dplyr::mutate(
+    # Cleaning the chords to the base form
+    chord_clean = stringr::str_extract(chord, pattern = "^([A-G]#?b?)"),
+    seq = lead(chord_clean)) %>% 
+  dplyr::filter(chord_clean != seq) %>% 
+  dplyr::group_by(chord_clean, seq) %>%  
+  dplyr::summarise(n = n())
+
+mat <- tidyr::spread(comp, key = chord_clean, value = n, fill = 0)  
+mm <- as.matrix(mat[, -1]) 
+
+# Building the chord diagram
+chorddiag::chorddiag(mm, showTicks = FALSE,
+                     palette = "Blues")
+
+```
+
+---
+
+# Regular expressions (regex)
+
+- Mini-language used to represent text
+- If you're working with text, you need to know regex
+- In `R`, regex can be used with the `stringr` package
+- To know more about regex: 
+    - [Slides](https://ctlente.com/pt/teaching/stringr-lubridate/)
+    - [Online material](https://www.curso-r.com/material/stringr/)
+    - [Cheat Sheet](https://github.com/rstudio/cheatsheets/raw/master/strings.pdf)
+    
+---
+
+# Chord diagram
+
+```{r, eval = TRUE, echo = FALSE, fig.align="center", out.width="100%"}
+# Counting the transitions between the chords
+comp <- chords %>% 
+  dplyr::mutate(
+    # Cleaning the chords to the base form
+    chord_clean = stringr::str_extract(chord, pattern = "^([A-G]#?b?)"),
+    seq = lead(chord_clean)) %>% 
+  dplyr::filter(chord_clean != seq) %>% 
+  dplyr::group_by(chord_clean, seq) %>%  
+  dplyr::summarise(n = n())
+
+mat <- tidyr::spread(comp, key = chord_clean, value = n, fill = 0)  
+mm <- as.matrix(mat[, -1]) 
+
+# Building the chord diagram
+chorddiag::chorddiag(mm, showTicks = FALSE, palette = "Blues")
+
+```
+
+---
+
+# The circle of fifths
+
+- Allows us to understand the most probable harmonic fields
+
+```{r, eval = TRUE, echo = FALSE}
+knitr::include_graphics("img/fifths.jpg")
+```
+
+
+
+---
+class: middle
+
+## What do we know so far?
+
+  - Some songs are harmonicallly more "complex" than others:
+    - number of distinct chords
+    - extracted variables
+  - The most common or rare chords transitions
+
+---
+
+# Part 3. Spotify Variables
+
+## Exploring the variables
+
+```{r}
+spot <- all_data %>% 
+  group_by(song) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Density of the popularity of the songs
+spot %>% 
+  ggplot(aes(popul)) +
+  geom_density(colour = 'dodgerblue4', fill = "darksalmon", 
+               alpha = 0.8) +
+  labs(x = "Popularidade", y = "Densidade") +
+  theme_bw(14)
+```
+
+---
+
+```{r, eval = TRUE, echo = FALSE}
+# Separating the data
+spot <- all_data %>% 
+  group_by(song) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Density of popularity
+spot %>% 
+  ggplot(aes(popul)) +
+  geom_density(colour = 'dodgerblue4',
+               fill = "darksalmon", 
+               alpha = 0.8) +
+  labs(y = 'Density', x = 'Popularity') +
+  theme_bw(14)
+```
+
+It varies a lot!
+---
+
+# Most popular and least popular songs
+
+```{r}
+spot %>% 
+  arrange(desc(popul)) %>%  
+  slice(c(1:15, 121:135)) %>% 
+  mutate(situation = rep(c('+popul', '-popul'), each = 15)) %>% 
+  select(popul, situation, song) %>% 
+  ggplot(aes(reorder(song, popul), popul, group = 1)) +
+  geom_bar(colour = 'dodgerblue4',  fill = "darksalmon", 
+           size = 0.3, alpha = 0.6, 
+           stat = "identity") +
+  facet_wrap(~situation, scales = "free") +
+  coord_flip() +
+  labs(x = 'Songs', y = 'Popularity') +
+  theme_bw(14)
+```
+
+---
+
+
+```{r, eval = TRUE, echo = FALSE, fig.width=8, fig.height=6}
+spot %>% 
+  arrange(desc(popul)) %>%  
+  slice(c(1:15, 121:135)) %>% 
+  mutate(situation = rep(c('+popul', '-popul'), each = 15)) %>% 
+  select(popul, situation, song) %>% 
+  ggplot(aes(reorder(song, popul), popul, group = 1)) +
+  geom_bar(colour = 'dodgerblue4',  fill = "darksalmon", 
+           size = 0.3, alpha = 0.6, 
+           stat = "identity") +
+  facet_wrap(~situation, scales = "free") +
+  coord_flip() +
+    labs(x = 'Songs', y = 'Popularity') +
+  theme_bw(14)
+
+```
+
+---
+
+# Danceability `x` variables
+
+```{r}
+dt <- spot %>% 
+  select(energy,  
+          loudness, speechiness, liveness, duration_ms, 
+          acousticness) %>% 
+  tidyr::gather(group, vars) 
+
+dt$danceability <- spot$danceability
+
+dt %>% 
+ggplot(aes(danceability, vars)) +
+  geom_point(colour = "darksalmon") +  
+  geom_smooth(method  = "lm", colour = "dodgerblue4") +
+  labs(x = "Danceability", y = "Variables") +
+  facet_wrap(~group, scales = "free") +
+  theme_bw(14)
+
+```
+
+---
+class: center
+
+```{r, eval = TRUE, echo = FALSE, fig.width=8, fig.height=7}
+dt <- spot %>% 
+  select(energy,  
+          loudness, speechiness, liveness, duration_ms, 
+          acousticness) %>% 
+  tidyr::gather(group, vars) 
+
+dt$danceability <- spot$danceability
+
+dt %>% 
+  ggplot(aes(danceability, vars)) +
+  geom_point(colour = "darksalmon") +  
+  geom_smooth(method  = "lm", colour = "dodgerblue4") +
+  labs(x = "Danceability", y = "Variables") +
+  facet_wrap(~group, scales = "free") +
+  theme_bw(14)
+
+```
+
+
+---
+class: middle
+
+## What do we know so far?
+
+- How the popularity varies for this dataset
+- What are the least and most popular songs
+- How is the relationship between the danceability and the other variables
+
+
+---
+
+class: bottom, center, inverse
+
+# Modeling
+
+---
+
+# Modeling
+
+Let's consider now that we have an especial interest in the popularity of
+the songs. Which variables would be most associate with higher or 
+smaller levels of popularity?
+
+To start with, let's transform the popularity into a class variable:
+
+```{r, eval = TRUE}
+library(randomForest)
+
+spot <- spot %>% 
+  mutate(pop_class = ifelse(
+    popul < quantile(popul, 0.25), "unpopular",
+    ifelse(popul < quantile(popul, 0.55), "neutral", "popular")))
+
+spot %>% 
+  janitor::tabyl(pop_class)
+```
+
+---
+**Wrangling the data to make it ready for modeling**
+
+```{r, eval = TRUE}
+# Combining the previous datasets and wrangling
+set.seed(1)
+model_data <- feat_chords %>% 
+  right_join(spot, by = c("song" = "song")) %>% 
+  right_join(summ, by = c("song" = "song")) %>% 
+  select(-analysis_url, -uri, -id.x, -id.y, -song, 
+         -name, -text, -lang, -chord, -long_str,
+         -key.x, -song.id, -sus, 
+         -popul) %>% 
+  mutate(pop_class = as.factor(pop_class)) %>% 
+  # Separating into train and test set
+  mutate(part = ifelse(runif(n()) > 0.25, "train", "test"))
+
+model_data %>% 
+  janitor::tabyl(part)
+```
+
+---
+
+Separating in train set (75%) and test set (25%):
+
+```{r, eval = TRUE}
+train <- model_data %>% 
+  filter(part == "train") %>% 
+  select(-part)
+
+test <- model_data %>% 
+  filter(part == "test") %>% 
+  select(-part)
+```
+
+The model will be like:
+
+` pop_class ~ minor + dimi + augm + seventh + seventh_M + sixth + fourth + fifth_aug + fifth_dim + ninth + bass + danceability + energy + key.y + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + time_signature + mean_pol `
+
+---
+
+```{r, eval = TRUE}
+m0 <- randomForest(pop_class ~ ., data = train, 
+                   ntree = 1000)
+m0
+```
+
+---
+**Visualizing the variable importance:**
+```{r}
+imp0 <- randomForest::importance(m0)
+imp0 <- data.frame(var = dimnames(imp0)[[1]], 
+                   value = c(imp0))
+
+imp0 %>% 
+  arrange(var, value) %>% 
+  mutate(var = fct_reorder(factor(var),  value,  min)) %>% 
+  ggplot(aes(var, value)) +
+  geom_point(size = 3.5, colour = "darksalmon") +
+  coord_flip() +
+  labs(x = "Variables", y = "Decrease in Gini criteria") +
+  theme_bw(14)
+```
+
+---
+**Visualizing the variable importance:**
+```{r, eval = TRUE, echo = FALSE}
+imp0 <- randomForest::importance(m0)
+imp0 <- data.frame(var = dimnames(imp0)[[1]], 
+                   value = c(imp0))
+
+imp0 %>% 
+  arrange(var, value) %>% 
+  mutate(var = fct_reorder(factor(var),  value,  min)) %>% 
+  ggplot(aes(var, value)) +
+  geom_point(size = 3.5, colour = "darksalmon") +
+  coord_flip() +
+  labs(x = "Variables", y = "Decrease in Gini criteria") +
+  theme_bw(14)
+
+```
+
+---
+
+```{r, eval = TRUE}
+corrplot::corrplot(cor(train %>% select_if(is.numeric), 
+                       method = "spearman"))
+```
+
+---
+**Redoing with the best variables**
+
+```{r, eval = TRUE}
+vars <- imp0 %>% 
+  arrange(desc(value)) %>% 
+  slice(1:10) %>% 
+  pull(var)
+
+form <- paste0("pop_class ~ ", paste0(vars, collapse = '+')) %>% 
+  as.formula()
+
+m1 <- randomForest(form, data = train, 
+                   ntree = 1000, mtry = 5)
+m1
+```
+
+
+
+---
+# Measuring the accuracy in the test set
+
+```{r, eval = TRUE}
+pred <- predict(m0, test)
+
+sum(pred == test$pop_class)/nrow(test)
+mean(m0$err.rate[,1])
+```
+
+---
+
+**How could we improve this model?**
+
+- More data!
+- Evaluate better the correlation between the variables
+- Remove noisy predictors
+- Engineer new features
+
+---
+class: middle
+# Citation
+
+```
+@misc{musicdatainR, 
+  author = {Wundervald, Bruna and Trecenti, Julio},
+  title = {Music Data Analysis in R},
+  url = {https://github.com/brunaw/SER2019},
+  year = {2019}
+}
+```
+
+---
+class: bottom, center, inverse
+
+<font size="30">Thank you! </font>
+
+

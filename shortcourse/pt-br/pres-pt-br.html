@@ -29,6 +29,15 @@ class: center, middle, inverse, title-slide
 
 
 
+class: middle
+
+Esta apresentação pode ser acessada em: http://brunaw.com/shortcourses/IXSER/pt-br/pres-pt-br.html
+
+**GitHub**:
+https://github.com/brunaw/SER2019
+
+---
+
 # Quem somos
 
 .pull-left[
@@ -112,6 +121,23 @@ library(tidyverse)
 ```
 
 ---
+class: bottom, center, inverse
+
+# Extração de dados
+## `vagalumeR`: letras de músicas 
+## `RSpotify`: variáveis do Spotify
+## `chorrrds`: acordes das músicas
+
+---
+# Extração de dados
+
+- Para cada pacote, existe um fluxo a ser seguido.
+
+- O fluxo envolve, basicamente, 
+  1. obter os IDs dos objetos dos quais queremos as informações (como artistas, álbuns, músicas), e 
+  2. passar estes IDs para funções específicas;
+
+---
 # Conectando às APIs
 ## `vagalumeR`
 Passos:
@@ -150,25 +176,6 @@ dados provenientes das duas APIs.
 
 ---
 
-class: bottom, center, inverse
-
-# Extração de dados
-## `vagalumeR`: letras de músicas 
-## `RSpotify`: variáveis do Spotify
-## `chorrrds`: acordes das músicas
-
----
-
-# Introdução
-
-- Para cada pacote, existe um fluxo a ser seguido.
-
-- O fluxo envolve, basicamente, obter os IDs dos objetos dos quais
-queremos as informações (como artistas, álbuns, músicas) e passar
-estes IDs para funções específicas;
-
----
-
 ## `vagalumeR`
 
 
@@ -192,6 +199,26 @@ lyrics &lt;-  songs %&gt;%
   dplyr::right_join(songs %&gt;% 
                       dplyr::select(song, song.id), by = "song.id")
 ```
+
+---
+
+## `RSpotify` - variáveis
+
+
+- “danceability” = o quão dançável uma música é, combinando elementos como tempo, batidas e regularidade.
+- “energy” = uma medida entre 0.0 e 1.0 representando a intensidade e atividade.
+- “key_spotify” = escala estimada da música. São valores inteiros mapeados na notação musical.  E.g. 0 = C, 1 = C#/Db 2 = D, e assim por diante.
+- “loudness” = altura da música em decibéis (dB).
+- “mode” = modalidade (maior ou menor), da escala da qual a música é derivada.
+- “speechiness” = detect a presença de palavras faladas.
+- “acousticness” = o quanto a música é acústica.
+- “instrumentalness” = se a música contém vocais. 
+- “liveness” = presença de audiência na gravação. 
+- “valence” = a "positividade" musical medida entre 0 e 1.
+- “tempo” = tempo estimado em batidas por minuto (BPM).
+- “duration_ms” = duração da música em milisegundos. 
+- “time_signature” = indica quantas batidas existem por compasso. 
+- "popularity"  = a popularidade de cada música.
 
 ---
 
@@ -320,7 +347,7 @@ nrow(chords) - nrow(all_data)
 
 - Resolver esses casos manualmente pode dar muito trabalho.
 - Uma forma de resolver automaticamente é calculando as similaridades entre os nomes.
-- Uma forma de medir a distância entre os nomes é verificando se um nome é igual ao outro a menos de uma, duas ou três letras. Por exemplo:
+- Podemos fazer isso medindo a distância entre os nomes é verificando se um nome é igual ao outro a menos de uma, duas ou três letras. Por exemplo:
 
 
 ```r
@@ -435,6 +462,8 @@ cat(
          results_dist_lyrics$from_lyrics, "', "), collapse = "")
 ```
 
+&gt; Link para os dados: https://github.com/brunaw/SER2019/tree/master/shortcourse/data/all_data.txt
+
 ---
 
 # Refazendo os `joins`
@@ -460,9 +489,9 @@ class: bottom, center, inverse
 # Parte 1: letras
 
 Pacotes extra:
-  - `tm`
-  - `tidytext`
-  - `lexiconPT`
+  - `tm`: análise de texto em geral
+  - `tidytext`: análise de texto `tidy`
+  - `lexiconPT`: dicionário de sentimentos em português
   
 
 
@@ -471,7 +500,9 @@ Pacotes extra:
 
 # n-grams
 
-Pega as palavras e seus passados.
+**n-grams**: as palavras e seus passados
+
+- útil na análise de expressões mais complexas ou sequências
 
 
 ```r
@@ -506,8 +537,7 @@ tokenizers::tokenize_ngrams(nome1, n = 3)
 
 # n-grams
 
-- útil para guardar expressões mais complexas.
-- a função `unnest_tokens()` é separa e empilha os n-gramas de cada letra.
+- a função `unnest_tokens()` separa e empilha os n-gramas de cada letra.
 
 
 ```r
@@ -517,14 +547,15 @@ library(wordcloud)
 # Lista de stopwords em português
 stopwords_pt &lt;- data.frame(word = tm::stopwords("portuguese"))
 
-# Quebrando as frase em palavras 
+# Quebrando as frases em palavras 
 unnested &lt;- all_data %&gt;% 
   select(text) %&gt;% 
-  unnest_tokens(word, text) %&gt;% 
+  unnest_tokens(word, text, token = "ngrams", n = 1) %&gt;% 
   # Removendo stopwords
   dplyr::anti_join(stopwords_pt, by = c("word" = "word"))
 ```
 
+*stopwords*: palavras que ocorrem com muito frequência e podem não ser essenciais para o significado de uma frase
 ---
 
 # Parte 1: letras
@@ -619,7 +650,7 @@ all_data %&gt;%
                  colour = 'darksalmon') + 
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
-  labs(x = 'Top 30 2-grams mais comuns', y = 'Counts') +
+  labs(x = 'Top 30 2-grams mais comuns', y = 'Contagem') +
   theme_bw(14)
 ```
 
@@ -689,7 +720,7 @@ summ &lt;- add_sentiments %&gt;%
   group_by(song) %&gt;% 
   summarise(mean_pol = mean(polarity)) 
 
-# Most positive and most negative songs
+# 15 músicas mais negativas e mais positivas
 summ %&gt;% 
   arrange(desc(mean_pol)) %&gt;% 
   slice(c(1:15, 121:135)) %&gt;% 
@@ -714,12 +745,21 @@ summ %&gt;%
 
 
 ---
+class: middle
+## O que sabemos até agora?
+
+  - As palavras e bi-gramas mais comuns 
+  - Existem mais palavras positivas do que negativas nas letras em geral
+  - Em quais músicas estão as palavras mais positivas e as mais negativas
+
+
+---
 
 # Parte 2. Acordes
 
 Pacotes extra:
-  - `ggridges`
-  - `chorddiag`
+  - `ggridges`: gráficos de densidades
+  - `chorddiag`: diagramas de cordas
 
 
 ```r
@@ -743,7 +783,7 @@ chords &lt;- all_data %&gt;%
 
 
 ```r
-# Top 20 músicas com uma maior quantidade de acordes
+# Top 20 músicas com uma maior quantidade de acordes distintos
 chords %&gt;% 
   dplyr::group_by(song, chord) %&gt;% 
   dplyr::summarise(distintos = n_distinct(chord)) %&gt;% 
@@ -763,7 +803,7 @@ chords %&gt;%
 &lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-34-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
-# Extraindo variáveis dos acordes
+# Extraindo variáveis
 
 - Os acordes são, no fundo, um pedaço de texto. 
 - Textos no estado "cru" não são muito informativos. 
@@ -786,7 +826,7 @@ uma interpretação clara:
 - Com baixo variante  
 
 ---
-# Extraindo variáveis dos acordes
+# Extraindo variáveis
 
 
 ```r
@@ -805,7 +845,7 @@ dt &lt;- feat_chords %&gt;%
 
 
 ---
-# Extraindo variáveis dos acordes
+# Extraindo variáveis 
 
 
 ```r
@@ -885,9 +925,9 @@ mat &lt;- tidyr::spread(comp, key = chord_clean, value = n, fill = 0)
 mm &lt;- as.matrix(mat[, -1]) 
 
 # Construindo o diagrama
-chorddiag::chorddiag(mm, showTicks = FALSE,
-                     palette = "Blues")
+chorddiag::chorddiag(mm, showTicks = FALSE, palette = "Blues")
 ```
+
 
 ---
 
@@ -909,10 +949,30 @@ chorddiag::chorddiag(mm, showTicks = FALSE,
 <div id="htmlwidget-6b2fa4c34b18763338e1" style="width:100%;height:504px;" class="chorddiag html-widget"></div>
 <script type="application/json" data-for="htmlwidget-6b2fa4c34b18763338e1">{"x":{"matrix":[[0,1,8,82,83,133,49,124,10,0,694,25,66,50,105,14,2],[21,0,0,6,3,0,2,0,0,0,9,0,2,2,1,2,0],[32,0,0,6,6,32,0,10,0,6,4,55,23,3,25,0,0],[164,9,10,0,28,98,26,64,2,3,91,0,43,342,48,13,5],[16,0,16,42,0,31,4,58,1,5,28,18,130,9,41,4,4],[70,6,26,50,46,0,25,36,3,30,100,21,98,16,447,2,1],[32,0,1,28,11,49,0,47,0,1,70,3,1,26,24,110,0],[549,1,7,32,43,60,15,0,12,1,59,94,69,44,117,12,1],[3,3,0,2,1,4,4,30,0,0,13,0,0,3,1,0,0],[2,0,18,1,3,5,0,11,0,0,3,5,0,1,10,2,2],[173,15,2,569,20,74,22,79,11,3,0,15,133,31,112,18,0],[23,0,16,7,76,27,0,56,0,2,15,0,17,6,28,2,0],[104,0,10,7,32,305,30,62,1,1,46,15,0,30,61,6,10],[81,11,2,32,3,37,186,41,1,0,61,0,29,0,117,13,2],[103,2,79,54,44,117,22,489,3,3,58,23,99,38,0,32,5],[72,0,2,28,8,1,18,10,20,0,26,1,1,15,28,0,0],[0,0,5,0,0,4,0,0,0,8,0,0,9,0,6,0,0]],"options":{"type":"directional","width":null,"height":null,"margin":100,"showGroupnames":true,"groupNames":["A","A#","Ab","B","Bb","C","C#","D","D#","Db","E","Eb","F","F#","G","G#","Gb"],"groupColors":["#F7FBFF","#DEEBF7","#C6DBEF","#9ECAE1","#6BAED6","#4292C6","#2171B5","#08519C","#08306B"],"groupThickness":0.1,"groupPadding":0.0349065850398866,"groupnamePadding":[30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30],"groupnameFontsize":18,"groupedgeColor":null,"chordedgeColor":"#808080","categoryNames":null,"categorynamePadding":100,"categorynameFontsize":28,"showTicks":false,"tickInterval":10,"ticklabelFontsize":10,"fadeLevel":0.1,"showTooltips":true,"showZeroTooltips":true,"tooltipNames":["A","A#","Ab","B","Bb","C","C#","D","D#","Db","E","Eb","F","F#","G","G#","Gb"],"tooltipFontsize":12,"tooltipUnit":"","tooltipGroupConnector":" &#x25B6; ","precision":"null","clickAction":null,"clickGroupAction":null}},"evals":[],"jsHooks":[]}</script>
 
+---
+
+# O círculo das quintas
+
+- Nos permite entender quais os campos harmônicos mais prováveis
+
+&lt;img src="img/fifths.jpg" style="display: block; margin: auto;" /&gt;
+
+
+---
+class: middle
+## O que sabemos até agora?
+
+  - Algumas músicas são harmonicamente mais "complexas" que outras:
+    - quantidades de acordes distintos
+    - variáveis extraídas
+  - As transições de acordes mais e menos frequentes
+
 
 ---
 
 # Parte 3. Variáveis do Spotify
+
+## Explorando as variáveis
 
 
 ```r
@@ -927,12 +987,14 @@ spot %&gt;%
   geom_density(colour = 'dodgerblue4', fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
-  theme_bw(14)
+  theme_bw(18)
 ```
 
 ---
 
-&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-42-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-43-1.png" style="display: block; margin: auto;" /&gt;
+
+Varia bastante!
 
 ---
 
@@ -958,7 +1020,7 @@ spot %&gt;%
 ---
 
 
-&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-44-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-45-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -967,9 +1029,8 @@ spot %&gt;%
 
 ```r
 dt &lt;- spot %&gt;% 
-  select(energy,  
-          loudness, speechiness, liveness, duration_ms, 
-          acousticness) %&gt;% 
+  select(energy, loudness, speechiness, liveness, 
+         duration_ms, acousticness) %&gt;% 
   tidyr::gather(group, vars) 
 
 dt$danceability &lt;- spot$danceability
@@ -986,8 +1047,15 @@ ggplot(aes(danceability, vars)) +
 ---
 class: center
 
-&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-46-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-47-1.png" style="display: block; margin: auto;" /&gt;
 
+---
+class: middle
+## O que sabemos até agora?
+
+- Como a popularidade varia nos dados 
+- Quais são as músicas mais e menos populares
+- Como é a relação da dançabilidade com as outras variáveis
 
 ---
 
@@ -1012,8 +1080,8 @@ library(randomForest)
 
 spot &lt;- spot %&gt;% 
   mutate(pop_class = ifelse(
-    popul &lt; quantile(popul, 0.33), "pouco popular",
-    ifelse(popul &lt; quantile(popul, 0.66), "neutro", "popular")))
+    popul &lt; quantile(popul, 0.25), "pouco popular",
+    ifelse(popul &lt; quantile(popul, 0.55), "neutro", "popular")))
 
 spot %&gt;% 
   janitor::tabyl(pop_class)
@@ -1021,9 +1089,9 @@ spot %&gt;%
 
 ```
 ##      pop_class  n   percent
-##         neutro 46 0.3407407
-##        popular 47 0.3481481
-##  pouco popular 42 0.3111111
+##         neutro 38 0.2814815
+##        popular 63 0.4666667
+##  pouco popular 34 0.2518519
 ```
 
 ---
@@ -1089,12 +1157,12 @@ m0
 ##                      Number of trees: 1000
 ## No. of variables tried at each split: 5
 ## 
-##         OOB estimate of  error rate: 42.86%
+##         OOB estimate of  error rate: 28.57%
 ## Confusion matrix:
 ##               neutro popular pouco popular class.error
-## neutro            18      10            11   0.5384615
-## popular            9      26             0   0.2571429
-## pouco popular     11       4            16   0.4838710
+## neutro            24      12             0   0.3333333
+## popular            7      44             0   0.1372549
+## pouco popular      5       6             7   0.6111111
 ```
 
 ---
@@ -1117,31 +1185,9 @@ imp0 %&gt;%
 
 ---
 **Visualizando a importância das variáveis**
-&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-52-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-53-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
-# Medindo a acurácia na base de teste
-
-
-```r
-pred &lt;- predict(m0, test)
-
-sum(pred == test$pop_class)/nrow(test)
-```
-
-```
-## [1] 0.5333333
-```
-
-```r
-mean(m0$err.rate[,1])
-```
-
-```
-## [1] 0.4593913
-```
-
-**Como melhorar o modelo?**
 
 
 ```r
@@ -1149,9 +1195,85 @@ corrplot::corrplot(cor(train %&gt;% select_if(is.numeric),
                        method = "spearman"))
 ```
 
----
+&lt;img src="pres-pt-br_files/figure-html/unnamed-chunk-54-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
+**Refazendo com as melhores variáveis**
+
+
+```r
+vars &lt;- imp0 %&gt;% 
+  arrange(desc(value)) %&gt;% 
+  slice(1:10) %&gt;% 
+  pull(var)
+
+form &lt;- paste0("pop_class ~ ", paste0(vars, collapse = '+')) %&gt;% 
+  as.formula()
+m1 &lt;- randomForest(form, data = train, 
+                   ntree = 1000, mtry = 5)
+m1
+```
+
+```
+## 
+## Call:
+##  randomForest(formula = form, data = train, ntree = 1000, mtry = 5) 
+##                Type of random forest: classification
+##                      Number of trees: 1000
+## No. of variables tried at each split: 5
+## 
+##         OOB estimate of  error rate: 25.71%
+## Confusion matrix:
+##               neutro popular pouco popular class.error
+## neutro            26       9             1   0.2777778
+## popular            8      43             0   0.1568627
+## pouco popular      4       5             9   0.5000000
+```
+
+---
+# Medindo a acurácia na base de teste
+
+
+```r
+pred &lt;- predict(m1, test)
+
+sum(pred == test$pop_class)/nrow(test)
+```
+
+```
+## [1] 0.5666667
+```
+
+```r
+mean(m1$err.rate[,1])
+```
+
+```
+## [1] 0.2499678
+```
+
+---
+
+**Como melhorar o modelo?**
+
+- Mais dados!
+- Avaliar melhor a correlação entre as variáveis
+- Remover variáveis de ruído
+- Criar novas variáveis
+
+
+---
+class: middle
+# Citação
+
+```
+@misc{musicdatainR, 
+  author = {Wundervald, Bruna and Trecenti, Julio},
+  title = {Music Data Analysis in R},
+  url = {https://github.com/brunaw/SER2019},
+  year = {2019}
+}
+```
 
 ---
 class: bottom, center, inverse

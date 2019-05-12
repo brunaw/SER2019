@@ -25,6 +25,15 @@ knitr::opts_chunk$set(echo = TRUE, fig.align = 'center',
 library(tidyverse)
 ```
 
+class: middle
+
+Esta apresentação pode ser acessada em: http://brunaw.com/shortcourses/IXSER/pt-br/pres-pt-br.html
+
+**GitHub**:
+https://github.com/brunaw/SER2019
+
+---
+
 # Quem somos
 
 .pull-left[
@@ -111,6 +120,23 @@ library(tidyverse)
 ```
 
 ---
+class: bottom, center, inverse
+
+# Extração de dados
+## `vagalumeR`: letras de músicas 
+## `RSpotify`: variáveis do Spotify
+## `chorrrds`: acordes das músicas
+
+---
+# Extração de dados
+
+- Para cada pacote, existe um fluxo a ser seguido.
+
+- O fluxo envolve, basicamente, 
+  1. obter os IDs dos objetos dos quais queremos as informações (como artistas, álbuns, músicas), e 
+  2. passar estes IDs para funções específicas;
+
+---
 # Conectando às APIs
 ## `vagalumeR`
 Passos:
@@ -147,25 +173,6 @@ dados provenientes das duas APIs.
 
 ---
 
-class: bottom, center, inverse
-
-# Extração de dados
-## `vagalumeR`: letras de músicas 
-## `RSpotify`: variáveis do Spotify
-## `chorrrds`: acordes das músicas
-
----
-
-# Introdução
-
-- Para cada pacote, existe um fluxo a ser seguido.
-
-- O fluxo envolve, basicamente, obter os IDs dos objetos dos quais
-queremos as informações (como artistas, álbuns, músicas) e passar
-estes IDs para funções específicas;
-
----
-
 ## `vagalumeR`
 
 ```{r, eval = FALSE}
@@ -188,6 +195,26 @@ lyrics <-  songs %>%
   dplyr::right_join(songs %>% 
                       dplyr::select(song, song.id), by = "song.id")
 ```
+
+---
+
+## `RSpotify` - variáveis
+
+
+- “danceability” = o quão dançável uma música é, combinando elementos como tempo, batidas e regularidade.
+- “energy” = uma medida entre 0.0 e 1.0 representando a intensidade e atividade.
+- “key_spotify” = escala estimada da música. São valores inteiros mapeados na notação musical.  E.g. 0 = C, 1 = C#/Db 2 = D, e assim por diante.
+- “loudness” = altura da música em decibéis (dB).
+- “mode” = modalidade (maior ou menor), da escala da qual a música é derivada.
+- “speechiness” = detect a presença de palavras faladas.
+- “acousticness” = o quanto a música é acústica.
+- “instrumentalness” = se a música contém vocais. 
+- “liveness” = presença de audiência na gravação. 
+- “valence” = a "positividade" musical medida entre 0 e 1.
+- “tempo” = tempo estimado em batidas por minuto (BPM).
+- “duration_ms” = duração da música em milisegundos. 
+- “time_signature” = indica quantas batidas existem por compasso. 
+- "popularity"  = a popularidade de cada música.
 
 ---
 
@@ -312,7 +339,7 @@ nrow(chords) - nrow(all_data)
 
 - Resolver esses casos manualmente pode dar muito trabalho.
 - Uma forma de resolver automaticamente é calculando as similaridades entre os nomes.
-- Uma forma de medir a distância entre os nomes é verificando se um nome é igual ao outro a menos de uma, duas ou três letras. Por exemplo:
+- Podemos fazer isso medindo a distância entre os nomes é verificando se um nome é igual ao outro a menos de uma, duas ou três letras. Por exemplo:
 
 ```{r, eval = TRUE}
 nome1 <- "Geni e o Zepelim"
@@ -415,6 +442,8 @@ cat(
 
 ```
 
+> Link para os dados: https://github.com/brunaw/SER2019/tree/master/shortcourse/data/all_data.txt
+
 ---
 
 # Refazendo os `joins`
@@ -439,20 +468,23 @@ class: bottom, center, inverse
 # Parte 1: letras
 
 Pacotes extra:
-  - `tm`
-  - `tidytext`
-  - `lexiconPT`
+  - `tm`: análise de texto em geral
+  - `tidytext`: análise de texto `tidy`
+  - `lexiconPT`: dicionário de sentimentos em português
   
 
 ```{r, echo = FALSE, eval = TRUE}
-all_data <- read.table("all_data.txt", stringsAsFactors = FALSE)
+all_data <- read.table("shortcourse/data/all_data.txt", 
+                       stringsAsFactors = FALSE)
 ```
 
 ---
 
 # n-grams
 
-Pega as palavras e seus passados.
+**n-grams**: as palavras e seus passados
+
+- útil na análise de expressões mais complexas ou sequências
 
 ```{r, eval = TRUE}
 nome1 <- "Geni e o Zepelim"
@@ -465,8 +497,7 @@ tokenizers::tokenize_ngrams(nome1, n = 3)
 
 # n-grams
 
-- útil para guardar expressões mais complexas.
-- a função `unnest_tokens()` é separa e empilha os n-gramas de cada letra.
+- a função `unnest_tokens()` separa e empilha os n-gramas de cada letra.
 
 ```{r, eval = TRUE}
 library(tidytext)
@@ -475,14 +506,15 @@ library(wordcloud)
 # Lista de stopwords em português
 stopwords_pt <- data.frame(word = tm::stopwords("portuguese"))
 
-# Quebrando as frase em palavras 
+# Quebrando as frases em palavras 
 unnested <- all_data %>% 
   select(text) %>% 
-  unnest_tokens(word, text) %>% 
+  unnest_tokens(word, text, token = "ngrams", n = 1) %>% 
   # Removendo stopwords
   dplyr::anti_join(stopwords_pt, by = c("word" = "word"))
 ```
 
+*stopwords*: palavras que ocorrem com muito frequência e podem não ser essenciais para o significado de uma frase
 ---
 
 # Parte 1: letras
@@ -568,7 +600,7 @@ all_data %>%
                  colour = 'darksalmon') + 
   geom_point(colour = 'dodgerblue4', size = 3, alpha = 0.9) +
   coord_flip() +
-  labs(x = 'Top 30 2-grams mais comuns', y = 'Counts') +
+  labs(x = 'Top 30 2-grams mais comuns', y = 'Contagem') +
   theme_bw(14)
 ```
 
@@ -647,7 +679,7 @@ add_sentiments %>%
 ---
 class:  center
 
-```{r, echo = FALSE, eval = TRUE}
+```{r, echo = FALSE, eval = TRUE, fig.width=8, fig.height=6}
 add_sentiments %>% 
   group_by(polarity) %>% 
   count(word) %>% 
@@ -675,7 +707,7 @@ summ <- add_sentiments %>%
   group_by(song) %>% 
   summarise(mean_pol = mean(polarity)) 
 
-# Most positive and most negative songs
+# 15 músicas mais negativas e mais positivas
 summ %>% 
   arrange(desc(mean_pol)) %>% 
   slice(c(1:15, 121:135)) %>% 
@@ -696,7 +728,7 @@ summ %>%
 
 --- 
 
-```{r, eval = TRUE, echo = FALSE}
+```{r, eval = TRUE, echo = FALSE, fig.width=8, fig.height=6}
 summ <- add_sentiments %>% 
   group_by(song) %>% 
   summarise(mean_pol = mean(polarity)) 
@@ -719,12 +751,21 @@ summ %>%
 
 
 ---
+class: middle
+## O que sabemos até agora?
+
+  - As palavras e bi-gramas mais comuns 
+  - Existem mais palavras positivas do que negativas nas letras em geral
+  - Em quais músicas estão as palavras mais positivas e as mais negativas
+
+
+---
 
 # Parte 2. Acordes
 
 Pacotes extra:
-  - `ggridges`
-  - `chorddiag`
+  - `ggridges`: gráficos de densidades
+  - `chorddiag`: diagramas de cordas
 
 ```{r}
 # Removendo enarmonias
@@ -746,7 +787,7 @@ chords <- all_data %>%
 # Parte 2. Acordes
 
 ```{r}
-# Top 20 músicas com uma maior quantidade de acordes
+# Top 20 músicas com uma maior quantidade de acordes distintos
 chords %>% 
   dplyr::group_by(song, chord) %>% 
   dplyr::summarise(distintos = n_distinct(chord)) %>% 
@@ -794,7 +835,7 @@ chords %>%
 ```
 
 ---
-# Extraindo variáveis dos acordes
+# Extraindo variáveis
 
 - Os acordes são, no fundo, um pedaço de texto. 
 - Textos no estado "cru" não são muito informativos. 
@@ -817,7 +858,7 @@ uma interpretação clara:
 - Com baixo variante  
 
 ---
-# Extraindo variáveis dos acordes
+# Extraindo variáveis
 
 ```{r, eval = TRUE}
 feat_chords <- all_data %>%
@@ -835,7 +876,7 @@ dt <- feat_chords %>%
 
 
 ---
-# Extraindo variáveis dos acordes
+# Extraindo variáveis 
 
 ```{r, eval = TRUE}
 dplyr::glimpse(feat_chords)
@@ -915,10 +956,10 @@ mat <- tidyr::spread(comp, key = chord_clean, value = n, fill = 0)
 mm <- as.matrix(mat[, -1]) 
 
 # Construindo o diagrama
-chorddiag::chorddiag(mm, showTicks = FALSE,
-                     palette = "Blues")
+chorddiag::chorddiag(mm, showTicks = FALSE, palette = "Blues")
 
 ```
+
 
 ---
 
@@ -957,10 +998,32 @@ chorddiag::chorddiag(mm, showTicks = FALSE,
 
 ```
 
+---
+
+# O círculo das quintas
+
+- Nos permite entender quais os campos harmônicos mais prováveis
+
+```{r, eval = TRUE, echo = FALSE}
+knitr::include_graphics("img/fifths.jpg")
+```
+
+
+---
+class: middle
+## O que sabemos até agora?
+
+  - Algumas músicas são harmonicamente mais "complexas" que outras:
+    - quantidades de acordes distintos
+    - variáveis extraídas
+  - As transições de acordes mais e menos frequentes
+
 
 ---
 
 # Parte 3. Variáveis do Spotify
+
+## Explorando as variáveis
 
 ```{r}
 spot <- all_data %>% 
@@ -974,7 +1037,7 @@ spot %>%
   geom_density(colour = 'dodgerblue4', fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
-  theme_bw(14)
+  theme_bw(18)
 ```
 
 ---
@@ -992,8 +1055,10 @@ spot %>%
                fill = "darksalmon", 
                alpha = 0.8) +
   labs(x = "Popularidade", y = "Densidade") +
-  theme_bw(14)
+  theme_bw(18)
 ```
+
+Varia bastante!
 
 ---
 
@@ -1018,7 +1083,7 @@ spot %>%
 ---
 
 
-```{r, eval = TRUE, echo = FALSE}
+```{r, eval = TRUE, echo = FALSE, fig.width=8, fig.height=6}
 spot %>% 
   arrange(desc(popul)) %>%  
   slice(c(1:15, 121:135)) %>% 
@@ -1041,9 +1106,8 @@ spot %>%
 
 ```{r}
 dt <- spot %>% 
-  select(energy,  
-          loudness, speechiness, liveness, duration_ms, 
-          acousticness) %>% 
+  select(energy, loudness, speechiness, liveness, 
+         duration_ms, acousticness) %>% 
   tidyr::gather(group, vars) 
 
 dt$danceability <- spot$danceability
@@ -1080,6 +1144,13 @@ dt %>%
 
 ```
 
+---
+class: middle
+## O que sabemos até agora?
+
+- Como a popularidade varia nos dados 
+- Quais são as músicas mais e menos populares
+- Como é a relação da dançabilidade com as outras variáveis
 
 ---
 
@@ -1103,8 +1174,8 @@ library(randomForest)
 
 spot <- spot %>% 
   mutate(pop_class = ifelse(
-    popul < quantile(popul, 0.33), "pouco popular",
-    ifelse(popul < quantile(popul, 0.66), "neutro", "popular")))
+    popul < quantile(popul, 0.25), "pouco popular",
+    ifelse(popul < quantile(popul, 0.55), "neutro", "popular")))
 
 spot %>% 
   janitor::tabyl(pop_class)
@@ -1187,30 +1258,65 @@ imp0 %>%
   geom_point(size = 3.5, colour = "darksalmon") +
   coord_flip() +
   labs(x = "Variáveis", y = "Diminuição no critério de Gini") +
-  theme_bw(14)
+  theme_bw(18)
 
+```
+
+---
+
+```{r, eval = TRUE}
+corrplot::corrplot(cor(train %>% select_if(is.numeric), 
+                       method = "spearman"))
+```
+
+---
+**Refazendo com as melhores variáveis**
+
+```{r, eval = TRUE}
+vars <- imp0 %>% 
+  arrange(desc(value)) %>% 
+  slice(1:10) %>% 
+  pull(var)
+
+form <- paste0("pop_class ~ ", paste0(vars, collapse = '+')) %>% 
+  as.formula()
+m1 <- randomForest(form, data = train, 
+                   ntree = 1000, mtry = 5)
+m1
 ```
 
 ---
 # Medindo a acurácia na base de teste
 
 ```{r, eval = TRUE}
-pred <- predict(m0, test)
+pred <- predict(m1, test)
 
 sum(pred == test$pop_class)/nrow(test)
-mean(m0$err.rate[,1])
+mean(m1$err.rate[,1])
 ```
+
+---
 
 **Como melhorar o modelo?**
 
-```{r}
-corrplot::corrplot(cor(train %>% select_if(is.numeric), 
-                       method = "spearman"))
+- Mais dados!
+- Avaliar melhor a correlação entre as variáveis
+- Remover variáveis de ruído
+- Criar novas variáveis
+
+
+---
+class: middle
+# Citação
+
 ```
-
----
-
----
+@misc{musicdatainR, 
+  author = {Wundervald, Bruna and Trecenti, Julio},
+  title = {Music Data Analysis in R},
+  url = {https://github.com/brunaw/SER2019},
+  year = {2019}
+}
+```
 
 ---
 class: bottom, center, inverse
