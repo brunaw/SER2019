@@ -3,3 +3,4 @@
 .RData
 .Ruserdata
 shortcourse/*.Rproj
+shortcourse/code/code_full.R

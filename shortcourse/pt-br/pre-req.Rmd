@@ -1,0 +1,74 @@
+---
+title: "Análise de dados musicais no `R`"
+subtitle: 'Pré-Requisitos'
+author: Bruna Wundervald & Julio Trecenti
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Bem-vindos! Este documento contém as informações sobre os pré-requisitos do minicurso "Análise de dados musicais no `R`", a ser ministrado durante o IV SER, em Niterói, RJ. 
+
+Espera-se que os participantes já tenham instalados em seu computador o `R` e o RStudio (ou outra IDE de preferência):
+
+  - https://cran.r-project.org/doc/manuals/r-release/R-admin.html
+  - https://www.rstudio.com/
+
+As versões não devem fazer muita diferença, contanto que os pacotes descritos abaixo possam ser instalados.
+
+## Pacotes 
+
+Os seguintes pacotes serão usados no decorrer do minicurso:
+
+  - `tidyverse`
+  - `chorrrds`
+  - `vagalumeR`
+  - `Rspotify`
+  - `tidytext`
+  - `tm`
+  - `lexiconPT`
+  - `ggridges`
+  - `chorddiag`: https://github.com/mattflor/chorddiag
+  
+Fora o último, todos estes pacotes estão no CRAN e não devem apresentar maiores problemas para a instalação. Para instalar, uma opção é:
+
+```{r, eval = FALSE}
+# Pacotes do CRAN
+pacotes <- c("tidyverse", "chorrrds", "vagalumeR", "Rspotify", 
+             "tidytext", "tm", "lexiconPT", "ggridges","devtools")
+
+inst <-  try(lapply(pacotes, library, character.only = TRUE),
+             silent = TRUE)
+  
+faltante <-  which(is.na(match(pacotes,installed.packages()[,'Package'])))
+
+if(length(faltante)>0) {
+  cat('Alguns pacotes estão faltando. Instalando...\n')
+  cat(pacotes[faltante], '\n')
+  lapply(pacotes[faltante], install.packages)
+}
+
+# chorddiag
+devtools::install_github("mattflor/chorddiag")
+```
+
+
+
+## Noções
+
+Este minicurso requer algumas noções básicas sobre `R`, expecialmente sobre os pacotes do `tidyverse`. Fora os pacotes epecíficos, nós utilizaremos intensivamente também:
+
+  - `dplyr`
+  - `stringr`
+  - `purrr`
+  - `ggplot2`
+  
+Para quem precisar dar uma relembrada no que estes pacotes fazem, nós recomendamos os materiais:
+
+  - https://www.curso-r.com/material/
+  - https://www.curso-r.com/blog/
+
+De qualquer forma, as funções utilizadas ao longo do material serão sempre explicadas. 
+  

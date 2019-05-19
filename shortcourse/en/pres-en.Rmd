@@ -1,6 +1,6 @@
 ---
 title: "Music Data Analysis in `R`"
-subtitle: "IV Internacional Seminar on Statistics with `R`"
+subtitle: "IV International Seminar on Statistics with `R`"
 author: Bruna Wundervald & Julio Trecenti
 date: May, 2019
 output:
@@ -1272,7 +1272,7 @@ corrplot::corrplot(cor(train %>% select_if(is.numeric),
 ```
 
 ---
-**Redoing with the best variables**
+**Redoing the model with the best variables**
 
 ```{r, eval = TRUE}
 vars <- imp0 %>% 
@@ -1320,6 +1320,18 @@ class: middle
   url = {https://github.com/brunaw/SER2019},
   year = {2019}
 }
+```
+
+---
+# Some references
+
+```{r, echo = FALSE, eval = TRUE, results='asis'}
+library(RefManageR)
+bibs <- ReadBib("shortcourse/pt-br/refs.bib", check = FALSE)
+print(bibs, 
+      .opts = list(check.entries = FALSE, 
+                   style = "html", 
+                   bib.style = "authoryear"))
 ```
 
 ---

@@ -1,0 +1,235 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Análise de dados musicais no R},
+            pdfauthor={Bruna Wundervald \& Julio Trecenti},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Análise de dados musicais no \texttt{R}}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \subtitle{Pré-Requisitos}
+  \author{Bruna Wundervald \& Julio Trecenti}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+    \date{}
+    \predate{}\postdate{}
+  
+
+\begin{document}
+\maketitle
+
+Bem-vindos! Este documento contém as informações sobre os pré-requisitos
+do minicurso ``Análise de dados musicais no \texttt{R}'', a ser
+ministrado durante o IV SER, em Niterói, RJ.
+
+Espera-se que os participantes já tenham instalados em seu computador o
+\texttt{R} e o RStudio (ou outra IDE de preferência):
+
+\begin{itemize}
+\tightlist
+\item
+  \url{https://cran.r-project.org/doc/manuals/r-release/R-admin.html}
+\item
+  \url{https://www.rstudio.com/}
+\end{itemize}
+
+As versões não devem fazer muita diferença, contanto que os pacotes
+descritos abaixo possam ser instalados.
+
+\hypertarget{pacotes}{%
+\subsection{Pacotes}\label{pacotes}}
+
+Os seguintes pacotes serão usados no decorrer do minicurso:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{tidyverse}
+\item
+  \texttt{chorrrds}
+\item
+  \texttt{vagalumeR}
+\item
+  \texttt{Rspotify}
+\item
+  \texttt{tidytext}
+\item
+  \texttt{tm}
+\item
+  \texttt{lexiconPT}
+\item
+  \texttt{ggridges}
+\item
+  \texttt{chorddiag}: \url{https://github.com/mattflor/chorddiag}
+\end{itemize}
+
+Fora o último, todos estes pacotes estão no CRAN e não devem apresentar
+maiores problemas para a instalação. Para instalar, uma opção é:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Pacotes do CRAN}
+\NormalTok{pacotes <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"tidyverse"}\NormalTok{, }\StringTok{"chorrrds"}\NormalTok{, }\StringTok{"vagalumeR"}\NormalTok{, }\StringTok{"Rspotify"}\NormalTok{, }
+             \StringTok{"tidytext"}\NormalTok{, }\StringTok{"tm"}\NormalTok{, }\StringTok{"lexiconPT"}\NormalTok{, }\StringTok{"ggridges"}\NormalTok{,}\StringTok{"devtools"}\NormalTok{)}
+
+\NormalTok{inst <-}\StringTok{  }\KeywordTok{try}\NormalTok{(}\KeywordTok{lapply}\NormalTok{(pacotes, library, }\DataTypeTok{character.only =} \OtherTok{TRUE}\NormalTok{),}
+             \DataTypeTok{silent =} \OtherTok{TRUE}\NormalTok{)}
+  
+\NormalTok{faltante <-}\StringTok{  }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(}\KeywordTok{match}\NormalTok{(pacotes,}\KeywordTok{installed.packages}\NormalTok{()[,}\StringTok{'Package'}\NormalTok{])))}
+
+\ControlFlowTok{if}\NormalTok{(}\KeywordTok{length}\NormalTok{(faltante)}\OperatorTok{>}\DecValTok{0}\NormalTok{) \{}
+  \KeywordTok{cat}\NormalTok{(}\StringTok{'Alguns pacotes estão faltando. Instalando...}\CharTok{\textbackslash{}n}\StringTok{'}\NormalTok{)}
+  \KeywordTok{cat}\NormalTok{(pacotes[faltante], }\StringTok{'}\CharTok{\textbackslash{}n}\StringTok{'}\NormalTok{)}
+  \KeywordTok{lapply}\NormalTok{(pacotes[faltante], install.packages)}
+\NormalTok{\}}
+
+\CommentTok{# chorddiag}
+\NormalTok{devtools}\OperatorTok{::}\KeywordTok{install_github}\NormalTok{(}\StringTok{"mattflor/chorddiag"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{nocoes}{%
+\subsection{Noções}\label{nocoes}}
+
+Este minicurso requer algumas noções básicas sobre \texttt{R},
+expecialmente sobre os pacotes do \texttt{tidyverse}. Fora os pacotes
+epecíficos, nós utilizaremos intensivamente também:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{dplyr}
+\item
+  \texttt{stringr}
+\item
+  \texttt{purrr}
+\item
+  \texttt{ggplot2}
+\end{itemize}
+
+Para quem precisar dar uma relembrada no que estes pacotes fazem, nós
+recomendamos os materiais:
+
+\begin{itemize}
+\tightlist
+\item
+  \url{https://www.curso-r.com/material/}
+\item
+  \url{https://www.curso-r.com/blog/}
+\end{itemize}
+
+De qualquer forma, as funções utilizadas ao longo do material serão
+sempre explicadas.
+
+
+\end{document}

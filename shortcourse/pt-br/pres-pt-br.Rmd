@@ -1319,6 +1319,18 @@ class: middle
 ```
 
 ---
+# Algumas referências
+
+```{r, echo = FALSE, eval = TRUE, results='asis'}
+library(RefManageR)
+bibs <- ReadBib("shortcourse/pt-br/refs.bib", check = FALSE)
+print(bibs, 
+      .opts = list(check.entries = FALSE, 
+                   style = "html", 
+                   bib.style = "authoryear"))
+```
+
+---
 class: bottom, center, inverse
 
 <font size="30">Obrigada! </font>
