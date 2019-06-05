@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Probabilistic Graphical Models in R and python</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Bruna Wundervald" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <script src="libs/kePrint-0.0.1/kePrint.js"></script>
+    <link rel="stylesheet" href="css/my-theme.css" type="text/css" />
+    <link rel="stylesheet" href="css/my-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Probabilistic Graphical Models in <code>R</code> and <code>python</code>
+## IV International Seminar on Statistics with R
+### Bruna Wundervald
+### May, 2019
+
+---
+
+
+
+
+class: middle
+
+# Outline
+
+- Introduction
+- Probabilistic (graphical) models 
+  - What are PGMs?
+  - Example
+- Fitting a PGM
+  - In `R`
+  - In `python` 
+- Resources 
+  
+
+---
+
+# Introduction
+
+- Most tasks require a person or a system to *reason* 
+
+- We construct *models* of the system which we would like to reason about
+  - Encode our knowledge about the system in a computer-readable form
+
+- Reasoning about what is *probable*
+
+&lt;img src="img/calvin.jpg" width="30%" height="30%" style="display: block; margin: auto;" /&gt;
+
+
+
+---
+
+class: center, middle, inverse
+
+##  Probabilistic Graphical Models 
+
+---
+
+class: center, middle, inverse
+
+##  Probabilistic Graphical Models 
+
+## (?)
+
+
+---
+
+#  `\(\underbrace{\text{Models}}_{}\)` 
+
+
+- The models represent our understanding of events;  
+- Declarative representation:
+  - Each model has its own unique assumptions. 
+- Can be deterministic (physical models) or involve random elements (statistical models) 
+
+---
+
+# `\(\underbrace{\text{Probabilistic}}_{}\)`
+
+- The models can not cover all elements related to the observed data:
+  - Variability due to model limitation
+  
+- Probability accomodates the **uncertainty**:
+  - Noisy observations 
+  - Model assumptions 
+
+- The world is **inherently** stochastic: 
+  - **Everything that involves probability is a model**
+  
+---
+
+#  `\(\underbrace{\text{Graphical}}_{}\)` 
+
+- Graphs are a computer science tool used in many different areas; 
+- Represent complex systems that have many variables; 
+- The systems can be a result of the models we assume:
+  - thousands or millions of parameters. 
+  
+&lt;img src="img/graph.png" width="30%" height="30%" style="display: block; margin: auto;" /&gt;
+
+
+---&gt;  Representation, inference, and learning: critical components in intelligent systems
+---
+
+class: middle, center
+
+## Reference books 
+
+.pull-left[
+&lt;img src="img/book.png" width="90%" style="display: block; margin: auto;" /&gt;
+] .pull-right[
+
+&lt;img src="img/bnlearn.png" width="90%" style="display: block; margin: auto;" /&gt;
+]
+
+
+---
+
+## Example
+
+- We want to investigate the usage patterns of different means of transport
+
+
+&lt;img src="img/transport.jpg" width="80%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Example
+
+
+.pull-left[
+&lt;img src="img/net.png" width="80%" style="display: block; margin: auto;" /&gt;
+] .pull-right[
+
+- **Age (A)**: young for individuals &lt; 30 years old, adult for individuals
+between 30 and 60 years, and old for people &gt; 60.
+- **Sex (S)**: male or female.
+- **Education (E)**: up to high school or university degree.
+- **Occupation (O)**: employee or self-employed.
+- **Residence (R)**: the size of the city, as small or big.
+- **Travel (T)**: the means of transport favored by the individual (car, train or other).
+]
+
+The **nature of the variables** suggests how they may be related to each other.
+
+---
+
+## Semantics
+
+- A Bayesian Network is a directed acyclic graph (DAG) G whose nodes represent random variables `\(X_1,\dots,X_p\)`
+- For each node `\(X_i\)`, there exists a conditional probability distribution `\(P(X_i |Par_G(X_i))\)` 
+- The CPDs will denote the dependencies existing in the graph 
+
+- By the chain rule of probability, we can always represent a joint distribution
+as follows, in any order:
+
+`$$P(x_1:V) = p(x_1) p(x_2 | x_1) p(x_3 | x_2, x_1) \dots p(x_V | x_{1:V})$$`
+
+being `\(V\)` the total number of variables. For the example, we have: 
+
+$$P(A, S, E, O, R, T) = P(A) P(S) P(E| A, S) P(O | E)  P(R | E) P(T | O, R) $$
+$$ P(A, S, E, O, R, T) = P(A) P(S) P(E| A, S) P(O, R | E) P(T | O, R)$$
+
+
+---
+
+## Some CPDs (using the data)
+
+.pull-left[
+$$ P(A) = $$
+&lt;table class="table table-condensed table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; adult &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; old &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; young &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 0.472 &lt;/td&gt;
+   &lt;td style="text-align:right;width: 4cm; "&gt; 0.208 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.32 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+$$ P(S) = $$
+&lt;table class="table table-condensed table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; F &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; M &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 0.402 &lt;/td&gt;
+   &lt;td style="text-align:right;width: 4cm; "&gt; 0.598 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+
+
+].pull-right[
+
+`$$P(E | S,  A) =$$` 
+
+&lt;table class="table table-condensed table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; S &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; A &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; high &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; uni &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; F &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4cm; "&gt; adult &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.639 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.361 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; F &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4cm; "&gt; old &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.846 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.154 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; F &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4cm; "&gt; young &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.538 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.462 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; M &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4cm; "&gt; adult &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.719 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.281 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; M &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4cm; "&gt; old &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.892 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.108 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; M &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4cm; "&gt; young &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.811 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.189 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+]
+
+
+---
+
+## Training the BN in `R` 
+- `bnlearn` package 
+- We build the network structure first and then pass the data into the fit function
+
+
+```r
+library(bnlearn)
+# Building the graph by hand 
+survey.dag = empty.graph(nodes = c("A", "S", "E", "O", "R", "T"))
+survey.dag = set.arc(survey.dag, from = "A", to = "E")
+survey.dag = set.arc(survey.dag, from = "S", to = "E")
+survey.dag = set.arc(survey.dag, from = "E", to = "O")
+survey.dag = set.arc(survey.dag, from = "E", to = "R")
+survey.dag = set.arc(survey.dag, from = "O", to = "T")
+survey.dag = set.arc(survey.dag, from = "R", to = "T")
+```
+
+---
+
+
+## Training the BN in `R` 
+
+
+```r
+# OR, by model declaration syntax
+survey.dag = model2network("[A][S][E|A:S][O|E][R|E][T|O:R]")
+
+skeleton(survey.dag)
+```
+
+```
+## 
+##   Random/Generated Bayesian network
+## 
+##   model:
+##     [undirected graph]
+##   nodes:                                 6 
+##   arcs:                                  6 
+##     undirected arcs:                     6 
+##     directed arcs:                       0 
+##   average markov blanket size:           2.00 
+##   average neighbourhood size:            2.00 
+##   average branching factor:              0.00 
+## 
+##   generation algorithm:                  Empty
+```
+
+---
+
+## Training the BN in `R` 
+
+
+
+The survey train data:
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; A &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; R &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; E &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; O &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; S &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; T &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; adult &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; big &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; high &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; emp &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; F &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; car &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; adult &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; small &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; uni &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; emp &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; M &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; car &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; adult &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; big &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; uni &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; emp &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; F &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; train &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+Using the network structure:
+
+```r
+bn.mod &lt;- bn.fit(survey.dag, data = train)
+```
+ 
+
+```
+## 
+##   Parameters of node A (multinomial distribution)
+## 
+## Conditional probability table:
+##      adult       old     young 
+## 0.4791667 0.2083333 0.3125000
+```
+ 
+---
+ 
+
+```
+## 
+##   Parameters of node S (multinomial distribution)
+## 
+## Conditional probability table:
+##          F         M 
+## 0.4074074 0.5925926
+```
+ 
+
+
+```
+## 
+##   Parameters of node E (multinomial distribution)
+## 
+## Conditional probability table:
+##  
+## , , S = F
+## 
+##       A
+## E          adult       old     young
+##   high 0.6627907 0.8571429 0.5454545
+##   uni  0.3372093 0.1428571 0.4545455
+## 
+## , , S = M
+## 
+##       A
+## E          adult       old     young
+##   high 0.7272727 0.8727273 0.8250000
+##   uni  0.2727273 0.1272727 0.1750000
+```
+
+---
+
+
+```
+## 
+##   Parameters of node O (multinomial distribution)
+## 
+## Conditional probability table:
+##  
+##       E
+## O            high        uni
+##   emp  0.98746082 0.92920354
+##   self 0.01253918 0.07079646
+```
+
+
+```
+## 
+##   Parameters of node R (multinomial distribution)
+## 
+## Conditional probability table:
+##  
+##        E
+## R            high       uni
+##   big   0.7147335 0.8672566
+##   small 0.2852665 0.1327434
+```
+
+---
+
+
+```
+## 
+##   Parameters of node T (multinomial distribution)
+## 
+## Conditional probability table:
+##  
+## , , R = big
+## 
+##        O
+## T              emp       self
+##   car   0.56645570 0.60000000
+##   other 0.21518987 0.20000000
+##   train 0.21835443 0.20000000
+## 
+## , , R = small
+## 
+##        O
+## T              emp       self
+##   car   0.56730769 0.50000000
+##   other 0.06730769 0.50000000
+##   train 0.36538462 0.00000000
+```
+
+
+---
+## BN predictions for the test set
+
+
+```r
+pred &lt;- predict(bn.mod, "T", test) 
+scales::percent(sum(pred == test$T)/nrow(test)) # Accuracy
+```
+
+```
+## [1] "66.2%"
+```
+
+## Random Forest comparison
+
+```r
+rf &lt;- randomForest::randomForest(T ~ . , data = train)
+scales::percent(sum(predict(rf, test) ==  test$T)/nrow(test)) # Accuracy
+```
+
+```
+## [1] "64.7%"
+```
+
+
+---
+
+## Training the BN in `python` 
+ 
+ - `pgmpy` package
+
+
+
+```python
+from pgmpy.models import BayesianModel
+from pgmpy.estimators import MaximumLikelihoodEstimator, BayesianEstimator
+```
+
+
+
+
+```python
+
+model = BayesianModel([('A', 'E'), ('S', 'E'), ('E', 'O'), ('E', 'R'),('R', 'T'), ('O', 'T')])
+model.fit(train, estimator = MaximumLikelihoodEstimator)
+print(model.get_cpds('A'))
+```
+
+```
+## +----------+----------+
+## | A(adult) | 0.479167 |
+## +----------+----------+
+## | A(old)   | 0.208333 |
+## +----------+----------+
+## | A(young) | 0.3125   |
+## +----------+----------+
+```
+
+--- 
+
+---
+
+
+```python
+print(model.get_cpds('T'))
+```
+
+```
+## +----------+---------------------+---------------------+---------+----------+
+## | O        | O(emp)              | O(emp)              | O(self) | O(self)  |
+## +----------+---------------------+---------------------+---------+----------+
+## | R        | R(big)              | R(small)            | R(big)  | R(small) |
+## +----------+---------------------+---------------------+---------+----------+
+## | T(car)   | 0.5664556962025317  | 0.5673076923076923  | 0.6     | 0.5      |
+## +----------+---------------------+---------------------+---------+----------+
+## | T(other) | 0.21518987341772153 | 0.0673076923076923  | 0.2     | 0.5      |
+## +----------+---------------------+---------------------+---------+----------+
+## | T(train) | 0.21835443037974683 | 0.36538461538461536 | 0.2     | 0.0      |
+## +----------+---------------------+---------------------+---------+----------+
+```
+
+
+
+```python
+
+## BN predictions for the test set
+test_response = test['T'] 
+pred = model.predict(test.drop(labels = 'T',  axis=1))
+```
+
+```
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+## 
+0it [00:00, ?it/s]
+```
+
+```python
+df = pd.DataFrame({'pred' : pred['T'], 'test' : test_response} ) 
+
+'{:.1%}'.format(df[df.pred == df.test].shape[0]/test.shape[0])
+```
+
+```
+## '66.2%'
+```
+
+---
+
+## BN details
+  - Way faster algorithm
+    - The simplest version just uses the CPDs
+  - It can accommodate millions of variables and parameters 
+
+
+##  Why do we need PGMs?
+
+- Every probabilistic model can be represented as a graph. That includes:
+  - Linear and generalized linear models 
+  - Probabilistic clustering 
+  - Probabilistic PCA
+  - Topic Modelling
+  - Hierarchical Models 
+  - Latent Variable Models in general
+  - Markov Chains
+  - Bayesian Neural Networks
+  - `\(\infty\)`
+
+---
+
+class:  middle
+
+## Some real-life examples
+
+- **Medical diagnosis**: which characteristics of a patient influence in the presence of disease?
+- **Spam filter**: how likely is an email to be spam given its content?
+
+- **Google Page Rank**: what are the more relevant pages in a Google search? 
+
+- **Recommendation systems (Netflix, Amazon, Facebook)**: which products the clients are more likely to consume?
+
+- **Presidential polls**: in who are the voters more likely to vote for?  
+
+
+---
+
+# Resources
+
+
+&gt; https://github.com/search?p=2&amp;q=probabilistic+models&amp;type=Repositories
+
+.pull-left[
+&lt;img src="img/github.png" width="70%" style="display: block; margin: auto;" /&gt;
+] .pull-right[
+
+- `bnlearn`: http://www.bnlearn.com/book-crc/
+  - data &amp; tutorials  
+- CRAN task `GR`: gRaphical Models in R
+  - Representation &amp; Modelling
+  - https://cran.r-project.org/web/views/gR.html
+  
+- `pgmpy` page: http://pgmpy.org/
+
+- many, **many** more packages for both `R` and `python`
+]
+
+---
+class: center, middle
+
+## Acknowledgments
+
+This work was supported by a Science Foundation Ireland Career Development Award grant number: 17/CDA/4695
+
+&lt;img src="img/SFI_logo.jpg" width="50%" height="40%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# References
+
+&lt;p&gt;&lt;cite&gt;Koller, D. and N. Friedman
+(2009).
+&lt;em&gt;Probabilistic graphical models: principles and techniques&lt;/em&gt;.
+MIT press.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;Murphy, K. P.
+(2012).
+&lt;em&gt;Machine learning: a probabilistic perspective&lt;/em&gt;.
+MIT press.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;Scutari, M.
+(2009).
+&amp;ldquo;Learning Bayesian networks with the bnlearn R package&amp;rdquo;.
+In: &lt;em&gt;arXiv preprint arXiv:0908.3817&lt;/em&gt;.&lt;/cite&gt;&lt;/p&gt;
+
+
+
+---
+class: bottom, center, inverse
+
+&lt;font size="30"&gt;Thanks! &lt;/font&gt;
+
+&lt;img src= "https://s3.amazonaws.com/kleebtronics-media/img/icons/github-white.png", width="50", height="50",  align="middle"&gt; 
+
+&lt;b&gt;
+
+ &lt;color="FFFFFF"&gt;  https://github.com/brunaw &lt;/color&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="https://platform.twitter.com/widgets.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

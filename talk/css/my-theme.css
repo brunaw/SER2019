@@ -1,0 +1,184 @@
+body {
+  color: #8B008B;
+}
+
+h1, h2, h3 {
+  font-weight: normal;
+  color: #FF4500;
+}
+
+.shout { color: #8B008B; 
+font-family: 'Muli', sans-serif;
+font-weight: bold;
+}
+
+.whisper { color: #8B008B; 
+font-family: 'Sofia', serif;
+font-style: italic;
+font-weight: bold;
+font-size: larger;
+}
+
+
+
+.onfire { color: #4A274F; }
+
+/* link color */
+a, a > code {
+  color: #F0A07C;
+}
+
+/* unvisited link */
+a:link {
+    color: #F0A07C;
+}
+
+/* visited link */
+a:visited {
+    color: #84d6d3;
+}
+
+/* mouse over link */
+a:hover {
+    color: #F0A07C;
+}
+
+/* selected link */
+a:active {
+    color: #FF4500;
+}
+
+.remark-code {
+  color: #8B008B;
+}
+
+.remark-inline-code { 
+  color: #8B008B;
+}
+
+.remark-code-line-highlighted { 
+  background-color: #2F3C7E; 
+}
+
+.inverse {
+  background-color: #FFBC61;
+  color: #FFFFFF;
+}
+
+.inverse h1, .inverse h2, .inverse h3 {
+  color: #FFFFFF;
+  /*line-height: 1.0em; */
+}
+
+.inverse .remark-code {
+  color: #2F3C7E;
+}
+
+/* Two-column layout */
+.left-column {
+  color: #777;
+  width: 25%;
+  height: 92%;
+  float: left;
+  font-size: 18px;
+}
+.left-column h2:last-of-type, .left-column h3:last-child {
+  color: #000;
+}
+.right-column {
+  width: 75%;
+  float: right;
+  padding-top: 1em;
+}
+.pull-left {
+  float: left;
+  width: 47%;
+}
+.pull-right {
+  float: right;
+  width: 47%;
+}
+.pull-right ~ * {
+  clear: both;
+}
+
+img, video, iframe {
+  max-width: 100%;
+}
+blockquote {
+  border-left: solid 5px lightgray;
+  padding-left: 1em;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee }
+
+@page { margin: 0; }
+
+.title-slide {
+  background-position: 80% 90%;
+  background-size: 250px;
+  background-color: #FFBC61;
+}
+
+.inverse h2 {
+  line-height: 1.1;
+  font-family: 'Sofia', serif;
+}
+
+.inverse .remark-inline-code { 
+  color: white;
+}
+
+.title-slide h1 {
+  color: #8B008B;
+  padding-top: 250px;
+  font-size: 35px;
+  line-height: 0.05;
+  text-align: left;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  text-shadow: none;
+  word-wrap: break-word;
+}
+
+.title-slide h2 {
+  color: #8B008B;
+  font-size: 40px;
+  text-align: left;
+  padding-top: 0px;
+  margin-top: 0px;
+  text-shadow: none;
+}
+
+.title-slide h3 {
+  font-family: 'Muli', sans-serif;
+  font-size: 25px;
+  color: #FFFFFF;
+  text-align: left;
+  text-shadow: none;
+  padding: 0px;
+  margin: 0px;
+  line-height: 1.1;
+}
+
+.title-slide .remark-slide-number {
+  display: none;
+}
+
+
+
+.center2 {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+

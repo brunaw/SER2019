@@ -11,4 +11,7 @@ https://ser2019.weebly.com/
   - [Data](https://github.com/brunaw/SER2019/blob/master/shortcourse/data/all_data.txt)
   - [Code](https://github.com/brunaw/SER2019/tree/master/shortcourse/code)
   
+
+## [Probabilistic Graphical Models in `R` and `python` - talk](http://brunaw.com/slides/SER2019/talk/pres.html)
+  
   
