@@ -1319,11 +1319,23 @@ class: middle
 ```
 
 ---
+class: center, middle
+
+## Agradecimentos
+
+Este trabalho recebeu o suporte da Science Foundation Ireland Career Development Award, financiamente de número: 17/CDA/4695
+
+```{r, echo=FALSE, fig.align='center', out.height="40%", out.width="50%", fig.height=2, eval = TRUE}
+knitr::include_graphics("img/SFI_logo.jpg")
+```
+
+
+---
 # Algumas referências
 
 ```{r, echo = FALSE, eval = TRUE, results='asis'}
 library(RefManageR)
-bibs <- ReadBib("shortcourse/pt-br/refs.bib", check = FALSE)
+bibs <- ReadBib("refs.bib", check = FALSE)
 print(bibs, 
       .opts = list(check.entries = FALSE, 
                    style = "html", 

@@ -50,7 +50,7 @@ https://github.com/brunaw/SER2019
 ]
 
 ---
-# Quem somos
+# Who are we
 
 .pull-left[
 &lt;img src="img/jubs.png" width="70%" style="display: block; margin: auto;" /&gt;
@@ -209,7 +209,7 @@ lyrics &lt;-  songs %&gt;%
 
 - “danceability” = describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity.
 - “energy” = a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity.
-- “key_spotify” = estimated overall key of the track. Integers map to pitches using standard Pitch Class notation . E.g. 0 = C, 1 = C#/Db 2 = D, and so on.
+- “key_spotify” = estimated overall key of the track. Integers map to pitches using standard Pitch Class notation. E.g. 0 = C, 1 = C#/Db 2 = D, and so on.
 - “loudness” = overall loudness of a track in decibels (dB).
 - “mode” = indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived.
 - “speechiness” = detects the presence of spoken words in a track.
@@ -337,7 +337,7 @@ all_data &lt;- chords %&gt;%
 ```
 
 ---
-**What if there a lot of unmatches?**
+**What if there are a lot of unmatches?**
 
 
 ```r
@@ -375,8 +375,7 @@ RecordLinkage::levenshteinSim(nome1, nome2)
 ```
 
 - When the titles are different, we should take the most similar ones and merge. 
-- Usually, there's no clear cut point for the similarity, so we define it 
-arbitrarly. 
+- Usually, there's no clear cut point for the similarity, so we define it arbitrarily. 
 
 ---
 
@@ -716,7 +715,7 @@ class:  center
 
 ---
 
-# Which are the mos positive and more negative songs?
+# Which are the most positive and more negative songs?
 
 
 ```r
@@ -882,10 +881,10 @@ library(ggridges)
 # Renaming current levels
 dt$group &lt;- forcats::lvls_revalue(
   dt$group,
-  c("Aumentado", "Baixo", "Diminuto", 
-    "Quinta Aum.", "Quinta Dim.", 
-    "Quarta", "Menor", "Nona", "Sétima",
-    "Sétima Maior", "Sexta"))
+  c("Augmented", "Bass", "Diminished",
+    "Augm. Fifth", "Dimi. Fifth",
+    "Fourth", "Minor", "Ninth", "Seventh",
+    "Major Seventh", "Sixth"))
 
 # Plotting densities of the extracted features
 
@@ -895,7 +894,7 @@ dt %&gt;%
   scale_fill_cyclical(values = c("dodgerblue4", "darksalmon")) +
   guides(fill = FALSE) +
   xlim(0, 1) +
-  labs(x = "Densidades", y = "Variáveis extraídas") +
+  labs(x = "Densities", y = "extracted features") +
   theme_bw(14)
 ```
 
@@ -966,7 +965,7 @@ class: middle
 
 ## What do we know so far?
 
-  - Some songs are harmonicallly more "complex" than others:
+  - Some songs are harmonically more "complex" than others:
     - number of distinct chords
     - extracted variables
   - The most common or rare chords transitions
@@ -989,7 +988,7 @@ spot %&gt;%
   ggplot(aes(popul)) +
   geom_density(colour = 'dodgerblue4', fill = "darksalmon", 
                alpha = 0.8) +
-  labs(x = "Popularidade", y = "Densidade") +
+  labs(y = 'Density', x = 'Popularity') +
   theme_bw(14)
 ```
 
@@ -1074,8 +1073,7 @@ class: bottom, center, inverse
 # Modeling
 
 Let's consider now that we have an especial interest in the popularity of
-the songs. Which variables would be most associate with higher or 
-smaller levels of popularity?
+the songs. Which variables would be most associated with higher or smaller levels of popularity?
 
 To start with, let's transform the popularity into a class variable:
 
@@ -1282,6 +1280,16 @@ class: middle
   year = {2019}
 }
 ```
+
+---
+class: center, middle
+
+## Acknowledgments
+
+This work was supported by a Science Foundation Ireland Career Development Award grant number: 17/CDA/4695
+
+&lt;img src="img/SFI_logo.jpg" width="50%" height="40%" style="display: block; margin: auto;" /&gt;
+
 
 ---
 # Some references
