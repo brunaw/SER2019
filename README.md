@@ -13,5 +13,13 @@ https://ser2019.weebly.com/
   
 
 ## [Probabilistic Graphical Models in `R` and `python` - talk](http://brunaw.com/slides/SER2019/talk/pres.html)
+
+**If you enjoy this work, consider [buying me a coffee](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=89DH4WYL2M7XW&source=url), so I can keep developing and maintaining this repository :)**
+
+<p align="center">
+  <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=89DH4WYL2M7XW&source=url">
+    <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" />
+  </a>
+</p>
   
   
