@@ -14,7 +14,7 @@ https://ser2019.weebly.com/
 
 ## [Probabilistic Graphical Models in `R` and `python` - talk](http://brunaw.com/slides/SER2019/talk/pres.html)
 
-**If you enjoy this work, consider [buying me a coffee in Revolut](https://rev.money/money-request/IgPRepSNHa), or Paypal:**
+**If you enjoy this work, consider [buying me a coffee in Ko-Fi](https://ko-fi.com/brunawundervald), or Paypal:**
 
 <p align="center">
   <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=89DH4WYL2M7XW&source=url">
