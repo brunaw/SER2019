@@ -353,12 +353,12 @@ scales::percent(sum(predict(rf, test) ==  test$T)/nrow(test)) # Accuracy
  - `pgmpy` package
 
 
-```{python, engine.path = "/anaconda3/bin/python3", echo = TRUE}
+```{python, engine.path = "/Users/brunawundervald/anaconda3/bin/python3", echo = TRUE}
 from pgmpy.models import BayesianModel
 from pgmpy.estimators import MaximumLikelihoodEstimator, BayesianEstimator
 ```
 
-```{python, engine.path = "/anaconda3/bin/python3", echo = FALSE}
+```{python, engine.path = "/Users/brunawundervald/anaconda3/bin/python3", echo = FALSE}
 import numpy
 import pandas as pd
 
